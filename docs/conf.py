@@ -19,8 +19,8 @@ sys.path.insert(0, os.path.abspath("ext"))
 # -- Project information -----------------------------------------------------
 
 project = "cool-django-auth-ldap"
-copyright = "2009, Peter Sagerson"
-author = "Peter Sagerson"
+copyright = "2019, Artem Vasin"
+author = "Artem Vasin"
 
 # The short X.Y version
 version = "2.0"
@@ -37,7 +37,7 @@ release = "2.0.0"
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ["sphinx.ext.intersphinx", "daldocs"]
+extensions = ["sphinx.ext.intersphinx", "daldocs",'sphinx_git']
 
 # Add any paths that contain templates here, relative to this directory.
 # templates_path = ['_templates']

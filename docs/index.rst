@@ -1,6 +1,11 @@
-================================
-Django Authentication Using LDAP
-================================
+=====================================
+Cool Django Authentication Using LDAP
+=====================================
+
+.. include:: ../badges-develop.rst
+
+.. git_commit_detail::
+    :branch:
 
 This is a Django authentication backend that authenticates against an LDAP
 service. Configuration can be as simple as a single distinguished name
