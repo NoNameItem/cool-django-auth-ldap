@@ -39,4 +39,3 @@ class GroupMapping(models.Model):
     """
     django_group = models.ForeignKey('auth.Group', on_delete=models.CASCADE, unique=True)
     ldap_group_name = models.CharField(max_length=300, unique=True)
-    ldap_group_dn = models.TextField(unique=True)
