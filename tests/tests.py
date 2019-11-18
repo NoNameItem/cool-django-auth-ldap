@@ -154,459 +154,459 @@ class LDAPTest(TestCase):
         super().setUp()
         cache.clear()
 
-    # def test_options(self):
-    #     self._init_settings(
-    #         USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
-    #         CONNECTION_OPTIONS={ldap.OPT_REFERRALS: 0},
-    #     )
-    #     user = authenticate(username="alice", password="password")
-    #
-    #     self.assertEqual(user.ldap_user.connection.get_option(ldap.OPT_REFERRALS), 0)
-    #
-    # def test_callable_server_uri(self):
-    #     request = RequestFactory().get("/")
-    #     cb_mock = mock.Mock(return_value=self.server.ldap_uri)
-    #
-    #     self._init_settings(
-    #         SERVER_URI=lambda request: cb_mock(request),
-    #         USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
-    #     )
-    #     user_count = User.objects.count()
-    #
-    #     user = authenticate(request=request, username="alice", password="password")
-    #
-    #     self.assertIs(user.has_usable_password(), False)
-    #     self.assertEqual(user.username, "alice")
-    #     self.assertEqual(User.objects.count(), user_count + 1)
-    #     cb_mock.assert_called_with(request)
-    #
-    # def test_deprecated_callable_server_uri(self):
-    #     self._init_settings(
-    #         SERVER_URI=lambda: self.server.ldap_uri,
-    #         USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
-    #     )
-    #     user_count = User.objects.count()
-    #
-    #     with warnings.catch_warnings(record=True) as w:
-    #         warnings.simplefilter("always")
-    #         user = authenticate(username="alice", password="password")
-    #
-    #     self.assertIs(user.has_usable_password(), False)
-    #     self.assertEqual(user.username, "alice")
-    #     self.assertEqual(User.objects.count(), user_count + 1)
-    #     self.assertEqual(len(w), 1)
-    #     self.assertEqual(w[0].category, DeprecationWarning)
-    #     self.assertEqual(
-    #         str(w[0].message),
-    #         "Update AUTH_LDAP_SERVER_URI callable tests.tests.<lambda> to "
-    #         "accept a positional `request` argument. Support for callables "
-    #         "accepting no arguments will be removed in a future version.",
-    #     )
-    #
-    # def test_simple_bind(self):
-    #     self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
-    #     user_count = User.objects.count()
-    #
-    #     user = authenticate(username="alice", password="password")
-    #
-    #     self.assertIs(user.has_usable_password(), False)
-    #     self.assertEqual(user.username, "alice")
-    #     self.assertEqual(User.objects.count(), user_count + 1)
-    #
-    # def test_default_settings(self):
-    #     class MyBackend(LDAPBackend):
-    #         default_settings = {
-    #             "SERVER_URI": self.server.ldap_uri,
-    #             "USER_DN_TEMPLATE": "uid=%(user)s,ou=people,o=test",
-    #         }
-    #
-    #     backend = MyBackend()
-    #
-    #     user_count = User.objects.count()
-    #
-    #     user = backend.authenticate(None, username="alice", password="password")
-    #
-    #     self.assertIs(user.has_usable_password(), False)
-    #     self.assertEqual(user.username, "alice")
-    #     self.assertEqual(User.objects.count(), user_count + 1)
-    #
-    # @_override_settings(
-    #     AUTHENTICATION_BACKENDS=[
-    #         "cool_django_auth_ldap.backend.LDAPBackend",
-    #         "django.contrib.auth.backends.ModelBackend",
-    #     ]
-    # )
-    # def test_login_with_multiple_auth_backends(self):
-    #     self._init_settings(
-    #         USER_SEARCH=LDAPSearch(
-    #             "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
-    #         )
-    #     )
-    #     user = authenticate(username="alice", password="password")
-    #     self.assertIsNotNone(user)
-    #
-    # @_override_settings(
-    #     AUTHENTICATION_BACKENDS=[
-    #         "cool_django_auth_ldap.backend.LDAPBackend",
-    #         "django.contrib.auth.backends.ModelBackend",
-    #     ]
-    # )
-    # def test_bad_login_with_multiple_auth_backends(self):
-    #     self._init_settings(
-    #         USER_SEARCH=LDAPSearch(
-    #             "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
-    #         )
-    #     )
-    #     user = authenticate(username="invalid", password="i_do_not_exist")
-    #     self.assertIsNone(user)
-    #
-    # def test_username_none(self):
-    #     self._init_settings()
-    #     user = authenticate(username=None, password="password")
-    #     self.assertIsNone(user)
-    #
-    # @spy_ldap("simple_bind_s")
-    # def test_simple_bind_escaped(self, mock):
-    #     """ Bind with a username that requires escaping. """
-    #     self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
-    #
-    #     user = authenticate(username="alice,1", password="password")
-    #
-    #     self.assertIsNone(user)
-    #     mock.assert_called_once_with("uid=alice\\,1,ou=people,o=test", "password")
-    #
-    # def test_new_user_lowercase(self):
-    #     self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
-    #     user_count = User.objects.count()
-    #
-    #     user = authenticate(username="Alice", password="password")
-    #
-    #     self.assertIs(user.has_usable_password(), False)
-    #     self.assertEqual(user.username, "alice")
-    #     self.assertEqual(User.objects.count(), user_count + 1)
-    #
-    # def test_deepcopy(self):
-    #     self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
-    #
-    #     user = authenticate(username="Alice", password="password")
-    #     user = deepcopy(user)
-    #
-    # @_override_settings(AUTH_USER_MODEL="tests.TestUser")
-    # def test_auth_custom_user(self):
-    #     self._init_settings(
-    #         USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
-    #         USER_ATTR_MAP={"uid_number": "uidNumber"},
-    #     )
-    #
-    #     user = authenticate(username="Alice", password="password")
-    #
-    #     self.assertIsInstance(user, TestUser)
-    #
-    # @_override_settings(AUTH_USER_MODEL="tests.TestUser")
-    # def test_get_custom_user(self):
-    #     self._init_settings(
-    #         USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
-    #         USER_ATTR_MAP={"uid_number": "uidNumber"},
-    #     )
-    #
-    #     backend = get_backend()
-    #     user = authenticate(username="Alice", password="password")
-    #     user = backend.get_user(user.id)
-    #
-    #     self.assertIsInstance(user, TestUser)
-    #
-    # @_override_settings(AUTH_USER_MODEL="tests.TestUser")
-    # def test_get_custom_field(self):
-    #     self._init_settings(
-    #         USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
-    #         USER_ATTR_MAP={"uid_number": "uidNumber"},
-    #         USER_QUERY_FIELD="uid_number",
-    #     )
-    #     alice = TestUser.objects.create(identifier="abcdef", uid_number=1000)
-    #     user = authenticate(username="Alice", password="password")
-    #     self.assertIsInstance(user, TestUser)
-    #     self.assertEqual(user.pk, alice.pk)
-    #
-    # def test_new_user_whitespace(self):
-    #     self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
-    #     user_count = User.objects.count()
-    #
-    #     user = authenticate(username=" alice", password="password")
-    #     user = authenticate(username="alice ", password="password")
-    #
-    #     self.assertIs(user.has_usable_password(), False)
-    #     self.assertEqual(user.username, "alice")
-    #     self.assertEqual(User.objects.count(), user_count + 1)
-    #
-    # def test_simple_bind_bad_user(self):
-    #     self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
-    #     user_count = User.objects.count()
-    #
-    #     user = authenticate(username="evil_alice", password="password")
-    #
-    #     self.assertIsNone(user)
-    #     self.assertEqual(User.objects.count(), user_count)
-    #
-    # def test_simple_bind_bad_password(self):
-    #     self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
-    #     user_count = User.objects.count()
-    #
-    #     user = authenticate(username="alice", password="bogus")
-    #
-    #     self.assertIsNone(user)
-    #     self.assertEqual(User.objects.count(), user_count)
-    #
-    # def test_existing_user(self):
-    #     self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
-    #     User.objects.create(username="alice")
-    #     user_count = User.objects.count()
-    #
-    #     user = authenticate(username="alice", password="password")
-    #
-    #     # Make sure we only created one user
-    #     self.assertIsNotNone(user)
-    #     self.assertEqual(User.objects.count(), user_count)
-    #
-    # def test_existing_user_insensitive(self):
-    #     self._init_settings(
-    #         USER_SEARCH=LDAPSearch(
-    #             "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
-    #         )
-    #     )
-    #     User.objects.create(username="alice")
-    #
-    #     user = authenticate(username="Alice", password="password")
-    #
-    #     self.assertIsNotNone(user)
-    #     self.assertEqual(user.username, "alice")
-    #     self.assertEqual(User.objects.count(), 1)
-    #
-    # def test_convert_username(self):
-    #     self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
-    #
-    #     class MyBackend(LDAPBackend):
-    #         def ldap_to_django_username(self, username):
-    #             return "ldap_%s" % username
-    #
-    #         def django_to_ldap_username(self, username):
-    #             return username[5:]
-    #
-    #     backend = MyBackend()
-    #     user_count = User.objects.count()
-    #
-    #     user1 = backend.authenticate(None, username="alice", password="password")
-    #     user2 = backend.get_user(user1.pk)
-    #
-    #     self.assertEqual(User.objects.count(), user_count + 1)
-    #     self.assertEqual(user1.username, "ldap_alice")
-    #     self.assertEqual(user1.ldap_user._username, "alice")
-    #     self.assertEqual(user1.ldap_username, "alice")
-    #     self.assertEqual(user2.username, "ldap_alice")
-    #     self.assertEqual(user2.ldap_user._username, "alice")
-    #     self.assertEqual(user2.ldap_username, "alice")
-    #
-    # def test_search_bind(self):
-    #     self._init_settings(
-    #         USER_SEARCH=LDAPSearch(
-    #             "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
-    #         )
-    #     )
-    #     user_count = User.objects.count()
-    #
-    #     user = authenticate(username="alice", password="password")
-    #
-    #     self.assertIsNotNone(user)
-    #     self.assertEqual(User.objects.count(), user_count + 1)
-    #
-    # @spy_ldap("search_s")
-    # def test_search_bind_escaped(self, mock):
-    #     """ Search for a username that requires escaping. """
-    #     self._init_settings(
-    #         USER_SEARCH=LDAPSearch(
-    #             "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
-    #         )
-    #     )
-    #
-    #     user = authenticate(username="alice*", password="password")
-    #
-    #     self.assertIsNone(user)
-    #     mock.assert_called_once_with(
-    #         "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=alice\\2a)", None
-    #     )
-    #
-    # def test_search_bind_no_user(self):
-    #     self._init_settings(
-    #         USER_SEARCH=LDAPSearch(
-    #             "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uidNumber=%(user)s)"
-    #         )
-    #     )
-    #
-    #     user = authenticate(username="alice", password="password")
-    #
-    #     self.assertIsNone(user)
-    #
-    # def test_search_bind_multiple_users(self):
-    #     self._init_settings(
-    #         USER_SEARCH=LDAPSearch("ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=*)")
-    #     )
-    #
-    #     user = authenticate(username="alice", password="password")
-    #
-    #     self.assertIsNone(user)
-    #
-    # def test_search_bind_bad_password(self):
-    #     self._init_settings(
-    #         USER_SEARCH=LDAPSearch(
-    #             "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
-    #         )
-    #     )
-    #
-    #     user = authenticate(username="alice", password="bogus")
-    #
-    #     self.assertIsNone(user)
-    #
-    # def test_search_bind_with_credentials(self):
-    #     self._init_settings(
-    #         BIND_DN="uid=bob,ou=people,o=test",
-    #         BIND_PASSWORD="password",
-    #         USER_SEARCH=LDAPSearch(
-    #             "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
-    #         ),
-    #     )
-    #
-    #     user = authenticate(username="alice", password="password")
-    #
-    #     self.assertIsNotNone(user)
-    #     self.assertIsNotNone(user.ldap_user)
-    #     self.assertEqual(user.ldap_user.dn, "uid=alice,ou=people,o=test")
-    #     self.assertEqual(
-    #         dict(user.ldap_user.attrs),
-    #         {
-    #             "objectClass": [
-    #                 "person",
-    #                 "organizationalPerson",
-    #                 "inetOrgPerson",
-    #                 "posixAccount",
-    #             ],
-    #             "cn": ["alice"],
-    #             "uid": ["alice"],
-    #             "userPassword": ["password"],
-    #             "uidNumber": ["1000"],
-    #             "gidNumber": ["1000"],
-    #             "givenName": ["Alice"],
-    #             "sn": ["Adams"],
-    #             "homeDirectory": ["/home/alice"],
-    #         },
-    #     )
-    #
-    # def test_search_bind_with_bad_credentials(self):
-    #     self._init_settings(
-    #         BIND_DN="uid=bob,ou=people,o=test",
-    #         BIND_PASSWORD="bogus",
-    #         USER_SEARCH=LDAPSearch(
-    #             "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
-    #         ),
-    #     )
-    #
-    #     user = authenticate(username="alice", password="password")
-    #
-    #     self.assertIsNone(user)
-    #
-    # def test_unicode_user(self):
-    #     self._init_settings(
-    #         USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
-    #         USER_ATTR_MAP={"first_name": "givenName", "last_name": "sn"},
-    #     )
-    #
-    #     user = authenticate(username="dreßler", password="password")
-    #     self.assertIsNotNone(user)
-    #     self.assertEqual(user.username, "dreßler")
-    #     self.assertEqual(user.last_name, "Dreßler")
-    #
-    # def test_cidict(self):
-    #     self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
-    #
-    #     user = authenticate(username="alice", password="password")
-    #
-    #     self.assertIsInstance(user.ldap_user.attrs, ldap.cidict.cidict)
-    #
-    # def test_populate_user(self):
-    #     self._init_settings(
-    #         USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
-    #         USER_ATTR_MAP={"first_name": "givenName", "last_name": "sn"},
-    #     )
-    #
-    #     user = authenticate(username="alice", password="password")
-    #
-    #     self.assertEqual(user.username, "alice")
-    #     self.assertEqual(user.first_name, "Alice")
-    #     self.assertEqual(user.last_name, "Adams")
-    #
-    # def test_populate_user_with_missing_attribute(self):
-    #     self._init_settings(
-    #         USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
-    #         USER_ATTR_MAP={
-    #             "first_name": "givenName",
-    #             "last_name": "sn",
-    #             "email": "mail",
-    #         },
-    #     )
-    #
-    #     user = authenticate(username="alice", password="password")
-    #     self.assertEqual(user.username, "alice")
-    #     self.assertEqual(user.first_name, "Alice")
-    #     self.assertEqual(user.last_name, "Adams")
-    #     self.assertEqual(user.email, "")
-    #
-    # @mock.patch.object(LDAPSearch, "execute", return_value=None)
-    # def test_populate_user_with_bad_search(self, mock_execute):
-    #     self._init_settings(
-    #         USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
-    #         USER_ATTR_MAP={"first_name": "givenName", "last_name": "sn"},
-    #     )
-    #
-    #     user = authenticate(username="alice", password="password")
-    #     self.assertEqual(user.username, "alice")
-    #     self.assertEqual(user.first_name, "")
-    #     self.assertEqual(user.last_name, "")
-    #
-    # @_override_settings(AUTH_USER_MODEL="tests.TestUser")
-    # def test_authenticate_with_buggy_setter_raises_exception(self):
-    #     self._init_settings(
-    #         USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
-    #         USER_ATTR_MAP={"first_name": "givenName", "uid_number": "uidNumber"},
-    #     )
-    #
-    #     with self.assertRaisesMessage(Exception, "Oops..."):
-    #         authenticate(username="alice", password="password")
-    #
-    # @_override_settings(AUTH_USER_MODEL="tests.TestUser")
-    # def test_populate_user_with_buggy_setter_raises_exception(self):
-    #     self._init_settings(
-    #         USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
-    #         USER_ATTR_MAP={"first_name": "givenName", "uid_number": "uidNumber"},
-    #     )
-    #
-    #     backend = get_backend()
-    #     with self.assertRaisesMessage(Exception, "Oops..."):
-    #         backend.populate_user("alice")
-    #
-    # @spy_ldap("search_s")
-    # def test_populate_with_attrlist(self, mock):
-    #     self._init_settings(
-    #         USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
-    #         USER_ATTR_MAP={"first_name": "givenName", "last_name": "sn"},
-    #         USER_ATTRLIST=["*", "+"],
-    #     )
-    #
-    #     user = authenticate(username="alice", password="password")
-    #
-    #     self.assertEqual(user.username, "alice")
-    #
-    #     # lookup user attrs
-    #     mock.assert_called_once_with(
-    #         "uid=alice,ou=people,o=test", ldap.SCOPE_BASE, "(objectClass=*)", ["*", "+"]
-    #     )
+    def test_options(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            CONNECTION_OPTIONS={ldap.OPT_REFERRALS: 0},
+        )
+        user = authenticate(username="alice", password="password")
+
+        self.assertEqual(user.ldap_user.connection.get_option(ldap.OPT_REFERRALS), 0)
+
+    def test_callable_server_uri(self):
+        request = RequestFactory().get("/")
+        cb_mock = mock.Mock(return_value=self.server.ldap_uri)
+
+        self._init_settings(
+            SERVER_URI=lambda request: cb_mock(request),
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+        )
+        user_count = User.objects.count()
+
+        user = authenticate(request=request, username="alice", password="password")
+
+        self.assertIs(user.has_usable_password(), False)
+        self.assertEqual(user.username, "alice")
+        self.assertEqual(User.objects.count(), user_count + 1)
+        cb_mock.assert_called_with(request)
+
+    def test_deprecated_callable_server_uri(self):
+        self._init_settings(
+            SERVER_URI=lambda: self.server.ldap_uri,
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+        )
+        user_count = User.objects.count()
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            user = authenticate(username="alice", password="password")
+
+        self.assertIs(user.has_usable_password(), False)
+        self.assertEqual(user.username, "alice")
+        self.assertEqual(User.objects.count(), user_count + 1)
+        self.assertEqual(len(w), 1)
+        self.assertEqual(w[0].category, DeprecationWarning)
+        self.assertEqual(
+            str(w[0].message),
+            "Update AUTH_LDAP_SERVER_URI callable tests.tests.<lambda> to "
+            "accept a positional `request` argument. Support for callables "
+            "accepting no arguments will be removed in a future version.",
+        )
+
+    def test_simple_bind(self):
+        self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
+        user_count = User.objects.count()
+
+        user = authenticate(username="alice", password="password")
+
+        self.assertIs(user.has_usable_password(), False)
+        self.assertEqual(user.username, "alice")
+        self.assertEqual(User.objects.count(), user_count + 1)
+
+    def test_default_settings(self):
+        class MyBackend(LDAPBackend):
+            default_settings = {
+                "SERVER_URI": self.server.ldap_uri,
+                "USER_DN_TEMPLATE": "uid=%(user)s,ou=people,o=test",
+            }
+
+        backend = MyBackend()
+
+        user_count = User.objects.count()
+
+        user = backend.authenticate(None, username="alice", password="password")
+
+        self.assertIs(user.has_usable_password(), False)
+        self.assertEqual(user.username, "alice")
+        self.assertEqual(User.objects.count(), user_count + 1)
+
+    @_override_settings(
+        AUTHENTICATION_BACKENDS=[
+            "cool_django_auth_ldap.backend.LDAPBackend",
+            "django.contrib.auth.backends.ModelBackend",
+        ]
+    )
+    def test_login_with_multiple_auth_backends(self):
+        self._init_settings(
+            USER_SEARCH=LDAPSearch(
+                "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
+            )
+        )
+        user = authenticate(username="alice", password="password")
+        self.assertIsNotNone(user)
+
+    @_override_settings(
+        AUTHENTICATION_BACKENDS=[
+            "cool_django_auth_ldap.backend.LDAPBackend",
+            "django.contrib.auth.backends.ModelBackend",
+        ]
+    )
+    def test_bad_login_with_multiple_auth_backends(self):
+        self._init_settings(
+            USER_SEARCH=LDAPSearch(
+                "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
+            )
+        )
+        user = authenticate(username="invalid", password="i_do_not_exist")
+        self.assertIsNone(user)
+
+    def test_username_none(self):
+        self._init_settings()
+        user = authenticate(username=None, password="password")
+        self.assertIsNone(user)
+
+    @spy_ldap("simple_bind_s")
+    def test_simple_bind_escaped(self, mock):
+        """ Bind with a username that requires escaping. """
+        self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
+
+        user = authenticate(username="alice,1", password="password")
+
+        self.assertIsNone(user)
+        mock.assert_called_once_with("uid=alice\\,1,ou=people,o=test", "password")
+
+    def test_new_user_lowercase(self):
+        self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
+        user_count = User.objects.count()
+
+        user = authenticate(username="Alice", password="password")
+
+        self.assertIs(user.has_usable_password(), False)
+        self.assertEqual(user.username, "alice")
+        self.assertEqual(User.objects.count(), user_count + 1)
+
+    def test_deepcopy(self):
+        self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
+
+        user = authenticate(username="Alice", password="password")
+        user = deepcopy(user)
+
+    @_override_settings(AUTH_USER_MODEL="tests.TestUser")
+    def test_auth_custom_user(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            USER_ATTR_MAP={"uid_number": "uidNumber"},
+        )
+
+        user = authenticate(username="Alice", password="password")
+
+        self.assertIsInstance(user, TestUser)
+
+    @_override_settings(AUTH_USER_MODEL="tests.TestUser")
+    def test_get_custom_user(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            USER_ATTR_MAP={"uid_number": "uidNumber"},
+        )
+
+        backend = get_backend()
+        user = authenticate(username="Alice", password="password")
+        user = backend.get_user(user.id)
+
+        self.assertIsInstance(user, TestUser)
+
+    @_override_settings(AUTH_USER_MODEL="tests.TestUser")
+    def test_get_custom_field(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            USER_ATTR_MAP={"uid_number": "uidNumber"},
+            USER_QUERY_FIELD="uid_number",
+        )
+        alice = TestUser.objects.create(identifier="abcdef", uid_number=1000)
+        user = authenticate(username="Alice", password="password")
+        self.assertIsInstance(user, TestUser)
+        self.assertEqual(user.pk, alice.pk)
+
+    def test_new_user_whitespace(self):
+        self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
+        user_count = User.objects.count()
+
+        user = authenticate(username=" alice", password="password")
+        user = authenticate(username="alice ", password="password")
+
+        self.assertIs(user.has_usable_password(), False)
+        self.assertEqual(user.username, "alice")
+        self.assertEqual(User.objects.count(), user_count + 1)
+
+    def test_simple_bind_bad_user(self):
+        self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
+        user_count = User.objects.count()
+
+        user = authenticate(username="evil_alice", password="password")
+
+        self.assertIsNone(user)
+        self.assertEqual(User.objects.count(), user_count)
+
+    def test_simple_bind_bad_password(self):
+        self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
+        user_count = User.objects.count()
+
+        user = authenticate(username="alice", password="bogus")
+
+        self.assertIsNone(user)
+        self.assertEqual(User.objects.count(), user_count)
+
+    def test_existing_user(self):
+        self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
+        User.objects.create(username="alice")
+        user_count = User.objects.count()
+
+        user = authenticate(username="alice", password="password")
+
+        # Make sure we only created one user
+        self.assertIsNotNone(user)
+        self.assertEqual(User.objects.count(), user_count)
+
+    def test_existing_user_insensitive(self):
+        self._init_settings(
+            USER_SEARCH=LDAPSearch(
+                "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
+            )
+        )
+        User.objects.create(username="alice")
+
+        user = authenticate(username="Alice", password="password")
+
+        self.assertIsNotNone(user)
+        self.assertEqual(user.username, "alice")
+        self.assertEqual(User.objects.count(), 1)
+
+    def test_convert_username(self):
+        self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
+
+        class MyBackend(LDAPBackend):
+            def ldap_to_django_username(self, username):
+                return "ldap_%s" % username
+
+            def django_to_ldap_username(self, username):
+                return username[5:]
+
+        backend = MyBackend()
+        user_count = User.objects.count()
+
+        user1 = backend.authenticate(None, username="alice", password="password")
+        user2 = backend.get_user(user1.pk)
+
+        self.assertEqual(User.objects.count(), user_count + 1)
+        self.assertEqual(user1.username, "ldap_alice")
+        self.assertEqual(user1.ldap_user._username, "alice")
+        self.assertEqual(user1.ldap_username, "alice")
+        self.assertEqual(user2.username, "ldap_alice")
+        self.assertEqual(user2.ldap_user._username, "alice")
+        self.assertEqual(user2.ldap_username, "alice")
+
+    def test_search_bind(self):
+        self._init_settings(
+            USER_SEARCH=LDAPSearch(
+                "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
+            )
+        )
+        user_count = User.objects.count()
+
+        user = authenticate(username="alice", password="password")
+
+        self.assertIsNotNone(user)
+        self.assertEqual(User.objects.count(), user_count + 1)
+
+    @spy_ldap("search_s")
+    def test_search_bind_escaped(self, mock):
+        """ Search for a username that requires escaping. """
+        self._init_settings(
+            USER_SEARCH=LDAPSearch(
+                "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
+            )
+        )
+
+        user = authenticate(username="alice*", password="password")
+
+        self.assertIsNone(user)
+        mock.assert_called_once_with(
+            "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=alice\\2a)", None
+        )
+
+    def test_search_bind_no_user(self):
+        self._init_settings(
+            USER_SEARCH=LDAPSearch(
+                "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uidNumber=%(user)s)"
+            )
+        )
+
+        user = authenticate(username="alice", password="password")
+
+        self.assertIsNone(user)
+
+    def test_search_bind_multiple_users(self):
+        self._init_settings(
+            USER_SEARCH=LDAPSearch("ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=*)")
+        )
+
+        user = authenticate(username="alice", password="password")
+
+        self.assertIsNone(user)
+
+    def test_search_bind_bad_password(self):
+        self._init_settings(
+            USER_SEARCH=LDAPSearch(
+                "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
+            )
+        )
+
+        user = authenticate(username="alice", password="bogus")
+
+        self.assertIsNone(user)
+
+    def test_search_bind_with_credentials(self):
+        self._init_settings(
+            BIND_DN="uid=bob,ou=people,o=test",
+            BIND_PASSWORD="password",
+            USER_SEARCH=LDAPSearch(
+                "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
+            ),
+        )
+
+        user = authenticate(username="alice", password="password")
+
+        self.assertIsNotNone(user)
+        self.assertIsNotNone(user.ldap_user)
+        self.assertEqual(user.ldap_user.dn, "uid=alice,ou=people,o=test")
+        self.assertEqual(
+            dict(user.ldap_user.attrs),
+            {
+                "objectClass": [
+                    "person",
+                    "organizationalPerson",
+                    "inetOrgPerson",
+                    "posixAccount",
+                ],
+                "cn": ["alice"],
+                "uid": ["alice"],
+                "userPassword": ["password"],
+                "uidNumber": ["1000"],
+                "gidNumber": ["1000"],
+                "givenName": ["Alice"],
+                "sn": ["Adams"],
+                "homeDirectory": ["/home/alice"],
+            },
+        )
+
+    def test_search_bind_with_bad_credentials(self):
+        self._init_settings(
+            BIND_DN="uid=bob,ou=people,o=test",
+            BIND_PASSWORD="bogus",
+            USER_SEARCH=LDAPSearch(
+                "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
+            ),
+        )
+
+        user = authenticate(username="alice", password="password")
+
+        self.assertIsNone(user)
+
+    def test_unicode_user(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            USER_ATTR_MAP={"first_name": "givenName", "last_name": "sn"},
+        )
+
+        user = authenticate(username="dreßler", password="password")
+        self.assertIsNotNone(user)
+        self.assertEqual(user.username, "dreßler")
+        self.assertEqual(user.last_name, "Dreßler")
+
+    def test_cidict(self):
+        self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
+
+        user = authenticate(username="alice", password="password")
+
+        self.assertIsInstance(user.ldap_user.attrs, ldap.cidict.cidict)
+
+    def test_populate_user(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            USER_ATTR_MAP={"first_name": "givenName", "last_name": "sn"},
+        )
+
+        user = authenticate(username="alice", password="password")
+
+        self.assertEqual(user.username, "alice")
+        self.assertEqual(user.first_name, "Alice")
+        self.assertEqual(user.last_name, "Adams")
+
+    def test_populate_user_with_missing_attribute(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            USER_ATTR_MAP={
+                "first_name": "givenName",
+                "last_name": "sn",
+                "email": "mail",
+            },
+        )
+
+        user = authenticate(username="alice", password="password")
+        self.assertEqual(user.username, "alice")
+        self.assertEqual(user.first_name, "Alice")
+        self.assertEqual(user.last_name, "Adams")
+        self.assertEqual(user.email, "")
+
+    @mock.patch.object(LDAPSearch, "execute", return_value=None)
+    def test_populate_user_with_bad_search(self, mock_execute):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            USER_ATTR_MAP={"first_name": "givenName", "last_name": "sn"},
+        )
+
+        user = authenticate(username="alice", password="password")
+        self.assertEqual(user.username, "alice")
+        self.assertEqual(user.first_name, "")
+        self.assertEqual(user.last_name, "")
+
+    @_override_settings(AUTH_USER_MODEL="tests.TestUser")
+    def test_authenticate_with_buggy_setter_raises_exception(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            USER_ATTR_MAP={"first_name": "givenName", "uid_number": "uidNumber"},
+        )
+
+        with self.assertRaisesMessage(Exception, "Oops..."):
+            authenticate(username="alice", password="password")
+
+    @_override_settings(AUTH_USER_MODEL="tests.TestUser")
+    def test_populate_user_with_buggy_setter_raises_exception(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            USER_ATTR_MAP={"first_name": "givenName", "uid_number": "uidNumber"},
+        )
+
+        backend = get_backend()
+        with self.assertRaisesMessage(Exception, "Oops..."):
+            backend.populate_user("alice")
+
+    @spy_ldap("search_s")
+    def test_populate_with_attrlist(self, mock):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            USER_ATTR_MAP={"first_name": "givenName", "last_name": "sn"},
+            USER_ATTRLIST=["*", "+"],
+        )
+
+        user = authenticate(username="alice", password="password")
+
+        self.assertEqual(user.username, "alice")
+
+        # lookup user attrs
+        mock.assert_called_once_with(
+            "uid=alice,ou=people,o=test", ldap.SCOPE_BASE, "(objectClass=*)", ["*", "+"]
+        )
 
     def test_bind_as_user(self):
         self._init_settings(
