@@ -1377,7 +1377,10 @@ class LDAPTest(TestCase):
         alice = authenticate(username="alice", password="password")
 
         self.assertEqual(alice.groups.count(), 2)
-        self.assertEqual(set(alice.groups.all()), {"django_active_px", "django_staff_px"})
+        self.assertEqual(
+            set(alice.groups.all().values_list("name", flat=True)),
+            {"django_active_px", "django_staff_px"}
+        )
 
     def test_nested_group_mirroring(self):
         self._init_settings(
@@ -1494,7 +1497,10 @@ class LDAPTest(TestCase):
                 "superuser_gon",
             },
         )
-        self.assertEqual(set(alice.groups.all()), {"django_active_gon", "django_staff_gon"})
+        self.assertEqual(
+            set(alice.groups.all().values_list("name", flat=True)),
+            {"django_active_gon", "django_staff_gon"}
+        )
 
     # Group mapping forbid use of groups white/black-list. Instead mapping works as whitelist and django groups should
     # be created beforehand
@@ -1511,9 +1517,25 @@ class LDAPTest(TestCase):
             USE_GROUP_MAPPING=True
         )
         backend = get_backend()
-        alice = backend.populate_user("alice")
         with self.assertRaises(ImproperlyConfigured):
-            authenticate(username="alice", password="password")
+            alice = backend.populate_user("alice")
+
+    def test_mapping_group_no_group_blacklist(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            GROUP_SEARCH=LDAPSearch(
+                "ou=mirror_groups,o=test",
+                ldap.SCOPE_SUBTREE,
+                "(objectClass=groupOfNames)",
+            ),
+            GROUP_TYPE=GroupOfNamesType(),
+            MIRROR_GROUPS_EXCEPT=["mirror1", "mirror2"],
+            USE_GROUP_MAPPING=True
+        )
+        backend = get_backend()
+
+        with self.assertRaises(ImproperlyConfigured):
+            alice = backend.populate_user("alice")
 
     def test_mapping_group_mirroring_whitelist_update(self):
         self._init_settings(

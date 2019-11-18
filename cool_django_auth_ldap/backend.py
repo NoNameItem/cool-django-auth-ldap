@@ -67,6 +67,7 @@ from cool_django_auth_ldap.config import (
     LDAPSearch,
     _LDAPConfig,
 )
+from cool_django_auth_ldap.models import GroupMapping
 
 logger = _LDAPConfig.get_logger()  # pylint: disable=invalid-name
 
@@ -656,7 +657,10 @@ class _LDAPUser:
         # This has to wait until we're sure the user has a pk.
         if self.settings.MIRROR_GROUPS or self.settings.MIRROR_GROUPS_EXCEPT:
             self._normalize_mirror_settings()
-            self._mirror_groups()
+            if self.settings.USE_GROUP_MAPPING:
+                self._mapping_mirror_groups()
+            else:
+                self._mirror_groups()
 
     def _populate_user(self):
         """
@@ -735,6 +739,14 @@ class _LDAPUser:
         mirror_groups_except = self.settings.MIRROR_GROUPS_EXCEPT
         mirror_groups = self.settings.MIRROR_GROUPS
 
+        if mirror_groups_except is not None and self.settings.USE_GROUP_MAPPING:
+            raise ImproperlyConfigured(
+                "{0} and {1} can't be used in the same time".format(
+                    self.settings.name("MIRROR_GROUPS_EXCEPT"),
+                    self.settings.name("USE_GROUP_MAPPING")
+                )
+            )
+
         if mirror_groups_except is not None:
             if isinstance(mirror_groups_except, (set, frozenset)):
                 pass
@@ -760,6 +772,13 @@ class _LDAPUser:
             if isinstance(mirror_groups, (bool, set, frozenset)):
                 pass
             elif isinstance(mirror_groups, (list, tuple)):
+                if self.settings.USE_GROUP_MAPPING:
+                    raise ImproperlyConfigured(
+                        "{0} and {1} can't be used in the same time".format(
+                            self.settings.name("MIRROR_GROUPS"),
+                            self.settings.name("USE_GROUP_MAPPING")
+                        )
+                    )
                 mirror_groups = self.settings.MIRROR_GROUPS = frozenset(mirror_groups)
             else:
                 raise malformed_mirror_groups()
@@ -767,6 +786,36 @@ class _LDAPUser:
             if isinstance(mirror_groups, (set, frozenset)) and (not all(isinstance(value, str) for value in
                                                                         mirror_groups)):
                 raise malformed_mirror_groups()
+
+    def _mapping_mirror_groups(self):
+        # Get target LDAP-managed groups
+        ldap_groups = frozenset(self._get_groups().get_group_names())
+        django_target_ldap_groups = frozenset(
+            GroupMapping.objects.select_related("django_group").filter(
+                ldap_group_name__in=ldap_groups
+            ).values_list(
+                "django_group", flat=True
+            ).iterator()
+        )
+
+        # Get ldap-managed and django-managed current groups
+        django_current_all_groups = frozenset(
+            self._user.groups.all().values_list(
+                "id", flat=True
+            ).iterator()
+        )
+        django_current_ldap_groups = frozenset(
+            GroupMapping.objects.select_related("django_group").filter(
+                django_group__in=self._user.groups.all()
+            ).values_list(
+                "django_group", flat=True
+            ).iterator()
+        )
+        django_current_non_ldap_groups = django_current_all_groups - django_current_ldap_groups
+
+        # Calculate new groups as union of target ldap and current non-ldap groups
+        new_groups = django_current_non_ldap_groups.union(django_target_ldap_groups)
+        self._user.groups.set(new_groups)
 
     def _mirror_groups(self):
         """
@@ -817,9 +866,15 @@ class _LDAPUser:
         Populates self._group_permissions based on LDAP group membership and
         Django group permissions.
         """
-        group_names = self._get_groups().get_group_names()
+        ldap_group_names = self._get_groups().get_group_names()
 
-        perms = Permission.objects.filter(group__name__in=group_names)
+        if self.settings.USE_GROUP_MAPPING:
+            django_groups = GroupMapping.objects.filter(ldap_group_name__in=ldap_group_names).values_list(
+                "django_group")
+            perms = Permission.objects.filter(group__in=django_groups)
+        else:
+            perms = Permission.objects.filter(group__name__in=ldap_group_names)
+
         perms = perms.values_list("content_type__app_label", "codename")
         perms = perms.order_by()
 
@@ -1047,6 +1102,7 @@ class LDAPSettings:
         "USER_DN_TEMPLATE": None,
         "USER_FLAGS_BY_GROUP": {},
         "USER_SEARCH": None,
+        "USE_GROUP_MAPPING": False,
     }
 
     def __init__(self, prefix="AUTH_LDAP_", defaults=None):
@@ -1067,9 +1123,9 @@ class LDAPSettings:
 
         # Compatibility with old caching settings.
         if getattr(
-                django.conf.settings,
-                self.name("CACHE_GROUPS"),
-                defaults.get("CACHE_GROUPS"),
+            django.conf.settings,
+            self.name("CACHE_GROUPS"),
+            defaults.get("CACHE_GROUPS"),
         ):
             warnings.warn(
                 "Found deprecated setting AUTH_LDAP_CACHE_GROUP. Use "

@@ -37,5 +37,5 @@ class GroupMapping(models.Model):
 
     Supports One-to-One group mapping
     """
-    django_group = models.ForeignKey('auth.Group', on_delete=models.CASCADE, unique=True)
+    django_group = models.ForeignKey('auth.Group', on_delete=models.CASCADE, unique=True, related_name="ldap_mapping")
     ldap_group_name = models.CharField(max_length=300, unique=True)
