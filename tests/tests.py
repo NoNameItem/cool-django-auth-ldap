@@ -54,7 +54,6 @@ from cool_django_auth_ldap.config import (
     PosixGroupType,
 )
 from cool_django_auth_ldap.models import GroupMapping
-
 from .models import TestUser
 
 
@@ -1053,12 +1052,12 @@ class LDAPTest(TestCase):
         alice = backend.get_user(alice.pk)
 
         self.assertEqual(
-            backend.get_group_permissions(alice), {"auth.view_user", "auth.delete_user"}
+            backend.get_group_permissions(alice), {"auth.add_group", "auth.delete_user"}
         )
         self.assertEqual(
-            backend.get_all_permissions(alice), {"auth.view_user", "auth.delete_user"}
+            backend.get_all_permissions(alice), {"auth.add_group", "auth.delete_user"}
         )
-        self.assertIs(backend.has_perm(alice, "auth.view_user"), True)
+        self.assertIs(backend.has_perm(alice, "auth.add_group"), True)
         self.assertIs(backend.has_module_perms(alice, "auth"), True)
 
     def test_group_permissions_ldap_error(self):
@@ -1130,7 +1129,7 @@ class LDAPTest(TestCase):
 
         self.assertEqual(backend.get_group_permissions(bob), set())
         self.assertEqual(backend.get_all_permissions(bob), set())
-        self.assertIs(backend.has_perm(bob, "auth.view_user"), False)
+        self.assertIs(backend.has_perm(bob, "auth.add_group"), False)
         self.assertIs(backend.has_module_perms(bob, "auth"), False)
 
     def test_posix_group_permissions(self):
@@ -1174,12 +1173,12 @@ class LDAPTest(TestCase):
         alice = backend.get_user(alice.pk)
 
         self.assertEqual(
-            backend.get_group_permissions(alice), {"auth.view_user", "auth.delete_user"}
+            backend.get_group_permissions(alice), {"auth.add_group", "auth.delete_user"}
         )
         self.assertEqual(
-            backend.get_all_permissions(alice), {"auth.view_user", "auth.delete_user"}
+            backend.get_all_permissions(alice), {"auth.add_group", "auth.delete_user"}
         )
-        self.assertIs(backend.has_perm(alice, "auth.view_user"), True)
+        self.assertIs(backend.has_perm(alice, "auth.add_group"), True)
         self.assertIs(backend.has_module_perms(alice, "auth"), True)
 
     def test_posix_group_permissions_no_gid(self):
@@ -1225,10 +1224,10 @@ class LDAPTest(TestCase):
 
         self.assertEqual(
             backend.get_group_permissions(nonposix),
-            {"auth.view_user", "auth.delete_user"},
+            {"auth.add_group", "auth.delete_user"},
         )
         self.assertEqual(
-            backend.get_all_permissions(nonposix), {"auth.view_user", "auth.delete_user"}
+            backend.get_all_permissions(nonposix), {"auth.add_group", "auth.delete_user"}
         )
         self.assertIs(backend.has_perm(nonposix, "auth.delete_user"), True)
         self.assertIs(backend.has_module_perms(nonposix, "auth"), True)
@@ -1312,7 +1311,7 @@ class LDAPTest(TestCase):
             alice = backend.get_user(alice_id)
             self.assertEqual(
                 backend.get_group_permissions(alice),
-                {"auth.view_user", "auth.delete_user"},
+                {"auth.add_group", "auth.delete_user"},
             )
 
             bob = backend.get_user(bob_id)
@@ -1751,7 +1750,7 @@ class LDAPTest(TestCase):
         alice = User.objects.create(username="alice")
 
         self.assertEqual(
-            backend.get_group_permissions(alice), {"auth.view_user", "auth.delete_user"}
+            backend.get_group_permissions(alice), {"auth.add_group", "auth.delete_user"}
         )
 
     def test_authorize_external_unknown(self):
@@ -1965,10 +1964,10 @@ class LDAPTest(TestCase):
 
         self.assertIsNotNone(alice)
         self.assertEqual(
-            backend.get_group_permissions(alice), {"auth.view_user", "auth.delete_user"}
+            backend.get_group_permissions(alice), {"auth.add_group", "auth.delete_user"}
         )
         self.assertEqual(
-            backend.get_all_permissions(alice), {"auth.view_user", "auth.delete_user"}
+            backend.get_all_permissions(alice), {"auth.add_group", "auth.delete_user"}
         )
         self.assertIs(backend.has_perm(alice, "auth.delete_user"), True)
         self.assertIs(backend.has_module_perms(alice, "auth"), True)
@@ -2083,7 +2082,7 @@ class LDAPTest(TestCase):
 
     def _init_groups_with_mapping(self):
         permissions = [
-            Permission.objects.get(codename="view_user"),
+            Permission.objects.get(codename="add_group"),
             Permission.objects.get(codename="delete_user"),
         ]
 
