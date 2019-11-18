@@ -1,0 +1,13 @@
+__pycache__/
+*.py[co]
+
+*.egg-info
+_build/
+build/
+dist/
+MANIFEST
+
+.coverage
+.tox/
+
+.idea
