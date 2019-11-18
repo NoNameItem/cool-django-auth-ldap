@@ -12,3 +12,4 @@ MANIFEST
 
 .idea
 *.db
+/python-ldap-test-*
