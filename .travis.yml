@@ -67,7 +67,7 @@ jobs:
         - provider: releases
           edge: true
           name: "$TRAVIS_TAG"
-          release_notes_file: ChangeLog
+          release_notes_file: release_notes
           cleanup: false
           overwrite: true
           file:
