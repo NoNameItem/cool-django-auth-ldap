@@ -4,19 +4,10 @@ Cool Django Authentication Using LDAP
 
 .. include:: ../badges-develop.rst
 
-.. git_commit_detail::
-    :branch:
-
 This is a Django authentication backend that authenticates against an LDAP
 service. Configuration can be as simple as a single distinguished name
 template, but there are many rich configuration options for working with users,
 groups, and permissions.
-
-* Documentation: https://django-auth-ldap.readthedocs.io/
-* PyPI: https://pypi.org/project/django-auth-ldap/
-* Repository: https://github.com/django-auth-ldap/django-auth-ldap
-* Tests: http://travis-ci.org/django-auth-ldap/django-auth-ldap
-* License: BSD 2-Clause
 
 This version is supported on Python 3.5+; and Django 1.11+. It requires
 `python-ldap`_ >= 3.1.

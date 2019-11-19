@@ -1,7 +1,7 @@
 Performance
 ===========
 
-:class:`~django_auth_ldap.backend.LDAPBackend` is carefully designed not to
+:class:`~cool_django_auth_ldap.backend.LDAPBackend` is carefully designed not to
 require a connection to the LDAP service for every request. Of course, this
 depends heavily on how it is configured. If LDAP traffic or latency is a concern
 for your deployment, this section has a few tips on minimizing it, in decreasing
@@ -22,7 +22,7 @@ order of impact.
 #. **Use simpler group types**. Some grouping mechanisms are more expensive than
    others. This will often be outside your control, but it's important to note
    that the extra functionality of more complex group types like
-   :class:`~django_auth_ldap.config.NestedGroupOfNamesType` is not free and will
+   :class:`~cool_django_auth_ldap.config.NestedGroupOfNamesType` is not free and will
    generally require a greater number and complexity of LDAP queries.
 
 #. **Use direct binding**. Binding with :setting:`AUTH_LDAP_USER_DN_TEMPLATE` is

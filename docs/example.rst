@@ -11,7 +11,7 @@ default settings and arguments are included for completeness.
 .. code-block:: python
 
     import ldap
-    from django_auth_ldap.config import LDAPSearch, GroupOfNamesType
+    from cool_django_auth_ldap.config import LDAPSearch, GroupOfNamesType
 
 
     # Baseline configuration.
@@ -63,6 +63,6 @@ default settings and arguments are included for completeness.
     # Keep ModelBackend around for per-user permissions and maybe a local
     # superuser.
     AUTHENTICATION_BACKENDS = (
-        "django_auth_ldap.backend.LDAPBackend",
+        "cool_django_auth_ldap.backend.LDAPBackend",
         "django.contrib.auth.backends.ModelBackend",
     )

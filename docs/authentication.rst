@@ -37,13 +37,6 @@ uncommon:
 
     AUTH_LDAP_CONNECTION_OPTIONS = {ldap.OPT_REFERRALS: 0}
 
-.. versionchanged:: 1.7.0
-
-    When ``AUTH_LDAP_SERVER_URI`` is set to a callable, it is now passed a
-    positional ``request`` argument. Support for no arguments will continue for
-    backwards compatibility but will be removed in a future version.
-
-
 Search/Bind
 -----------
 
@@ -56,7 +49,7 @@ password. The second method is to derive the user's DN from his username and
 attempt to bind as the user directly.
 
 Because LDAP searches appear elsewhere in the configuration, the
-:class:`~django_auth_ldap.config.LDAPSearch` class is provided to encapsulate
+:class:`~cool_django_auth_ldap.config.LDAPSearch` class is provided to encapsulate
 search information. In this case, the filter parameter should contain the
 placeholder ``%(user)s``. A simple configuration for the search/bind approach
 looks like this (some defaults included for completeness):
@@ -64,7 +57,7 @@ looks like this (some defaults included for completeness):
 .. code-block:: python
 
     import ldap
-    from django_auth_ldap.config import LDAPSearch
+    from cool_django_auth_ldap.config import LDAPSearch
 
     AUTH_LDAP_BIND_DN = ""
     AUTH_LDAP_BIND_PASSWORD = ""
@@ -82,17 +75,15 @@ of an authorized user and :setting:`AUTH_LDAP_BIND_PASSWORD` to the password.
 Search Unions
 ^^^^^^^^^^^^^
 
-.. versionadded:: 1.1
-
 If you need to search in more than one place for a user, you can use
-:class:`~django_auth_ldap.config.LDAPSearchUnion`. This takes multiple
+:class:`~cool_django_auth_ldap.config.LDAPSearchUnion`. This takes multiple
 LDAPSearch objects and returns the union of the results. The precedence of the
 underlying searches is unspecified.
 
 .. code-block:: python
 
     import ldap
-    from django_auth_ldap.config import LDAPSearch, LDAPSearchUnion
+    from cool_django_auth_ldap.config import LDAPSearch, LDAPSearchUnion
 
     AUTH_LDAP_USER_SEARCH = LDAPSearchUnion(
         LDAPSearch("ou=users,dc=example,dc=com", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"),
@@ -119,11 +110,9 @@ efficient) equivalent:
 Customizing Authentication
 --------------------------
 
-.. versionadded:: 1.3
-
 It is possible to further customize the authentication process by subclassing
-:class:`~django_auth_ldap.backend.LDAPBackend` and overriding
-:meth:`~django_auth_ldap.backend.LDAPBackend.authenticate_ldap_user`. The first
+:class:`~cool_django_auth_ldap.backend.LDAPBackend` and overriding
+:meth:`~cool_django_auth_ldap.backend.LDAPBackend.authenticate_ldap_user`. The first
 argument is the unauthenticated :ref:`ldap_user <ldap_user>`, the second is the
 supplied password. The intent is to give subclasses a simple pre- and
 post-authentication hook.
@@ -143,13 +132,13 @@ Notes
 -----
 
 LDAP is fairly flexible when it comes to matching DNs.
-:class:`~django_auth_ldap.backend.LDAPBackend` makes an effort to accommodate
+:class:`~cool_django_auth_ldap.backend.LDAPBackend` makes an effort to accommodate
 this by forcing usernames to lower case when creating Django users and trimming
 whitespace when authenticating.
 
 Some LDAP servers are configured to allow users to bind without a password. As a
 precaution against false positives,
-:class:`~django_auth_ldap.backend.LDAPBackend` will summarily reject any
+:class:`~cool_django_auth_ldap.backend.LDAPBackend` will summarily reject any
 authentication attempt with an empty password. You can disable this behavior by
 setting :setting:`AUTH_LDAP_PERMIT_EMPTY_PASSWORD` to True.
 
@@ -173,9 +162,9 @@ enable StartTLS, set :setting:`AUTH_LDAP_START_TLS` to ``True``:
 
     AUTH_LDAP_START_TLS = True
 
-If :class:`~django_auth_ldap.backend.LDAPBackend` receives an
+If :class:`~cool_django_auth_ldap.backend.LDAPBackend` receives an
 :exc:`~ldap.LDAPError` from python_ldap, it will normally swallow it and log a
 warning. If you'd like to perform any special handling for these exceptions, you
-can add a signal handler to :data:`django_auth_ldap.backend.ldap_error`. The
+can add a signal handler to :data:`cool_django_auth_ldap.backend.ldap_error`. The
 signal handler can handle the exception any way you like, including re-raising
 it or any other exception.

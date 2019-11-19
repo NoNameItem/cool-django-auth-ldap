@@ -1,25 +1,25 @@
 Custom Behavior
 ===============
 
-There are times that the default :class:`~django_auth_ldap.backend.LDAPBackend`
+There are times that the default :class:`~cool_django_auth_ldap.backend.LDAPBackend`
 behavior may be insufficient for your needs. In those cases, you can further 
 customize the behavior by following these general steps:
 
 
-* Create your own :class:`~django_auth_ldap.backend.LDAPBackend` subclass.
-* Use :attr:`~django_auth_ldap.backend.LDAPBackend.default_settings` to define
+* Create your own :class:`~cool_django_auth_ldap.backend.LDAPBackend` subclass.
+* Use :attr:`~cool_django_auth_ldap.backend.LDAPBackend.default_settings` to define
   any custom settings you may want to use.
-* Override :meth:`~django_auth_ldap.backend.LDAPBackend.authenticate_ldap_user` 
+* Override :meth:`~cool_django_auth_ldap.backend.LDAPBackend.authenticate_ldap_user`
   hook and/or any other method as needed.
 * Define additional methods and attributes as needed.
 * Access your custom settings via ``self.settings`` inside your 
-  :class:`~django_auth_ldap.backend.LDAPBackend` subclass.
+  :class:`~cool_django_auth_ldap.backend.LDAPBackend` subclass.
 
 
 Subclassing LDAPBackend
 -----------------------
 
-You can implement your own :class:`~django_auth_ldap.backend.LDAPBackend` subclass
+You can implement your own :class:`~cool_django_auth_ldap.backend.LDAPBackend` subclass
 if you need some custom behavior. For example, you want to only allow 50 login 
 attempts every 30 minutes, and those numbers may change as needed. Furthermore, 
 any successful login attempt against the LDAP server must send out an SMS 
@@ -35,7 +35,7 @@ something like this:
 
     from django.core.cache import cache
 
-    from django_auth_ldap.backend import LDAPBackend
+    from cool_django_auth_ldap.backend import LDAPBackend
 
 
     class CustomLDAPBackend(LDAPBackend):
@@ -98,7 +98,7 @@ Using default_settings
 
 While you can use your own custom Django settings to create something similar 
 to the sample code above, there are a couple of advantages in using 
-:attr:`~django_auth_ldap.backend.LDAPBackend.default_settings` instead. 
+:attr:`~cool_django_auth_ldap.backend.LDAPBackend.default_settings` instead.
 
 Following the sample code above, one advantage is that the subclass will now 
 automatically check your Django settings for ``AUTH_LDAP_LOGIN_COUNTER_KEY``, 
@@ -130,7 +130,7 @@ prefix, then you can simply modify your settings.py like so.
         # ...
     ]
 
-If the :attr:`~django_auth_ldap.backend.LDAPBackend.settings_prefix` of the
+If the :attr:`~cool_django_auth_ldap.backend.LDAPBackend.settings_prefix` of the
 subclass was also changed, then the prefix must also be used in your settings. 
 For example, if the prefix was changed to "AUTH_LDAP_1\_", then it should look 
 like this.

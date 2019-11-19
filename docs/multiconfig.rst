@@ -1,11 +1,9 @@
 Multiple LDAP Configs
 =====================
 
-.. versionadded:: 1.1
-
 You've probably noticed that all of the settings for this backend have the
 prefix AUTH_LDAP\_. This is the default, but it can be customized by subclasses
-of :class:`~django_auth_ldap.backend.LDAPBackend`. The main reason you would
+of :class:`~cool_django_auth_ldap.backend.LDAPBackend`. The main reason you would
 want to do this is to create two backend subclasses that reference different
 collections of settings and thus operate independently. For example, you might
 have two separate LDAP servers that you want to authenticate against. A short
@@ -15,7 +13,7 @@ example should demonstrate this:
 
     # mypackage.ldap
 
-    from django_auth_ldap.backend import LDAPBackend
+    from cool_django_auth_ldap.backend import LDAPBackend
 
 
     class LDAPBackend1(LDAPBackend):
