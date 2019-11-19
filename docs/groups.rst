@@ -7,13 +7,13 @@ Types of Groups
 Working with groups in LDAP can be a tricky business, mostly because there are
 so many different kinds. This module includes an extensible API for working with
 any kind of group and includes implementations for the most common ones.
-:class:`~django_auth_ldap.config.LDAPGroupType` is a base class whose concrete
+:class:`~cool_django_auth_ldap.config.LDAPGroupType` is a base class whose concrete
 subclasses can determine group membership for particular grouping mechanisms.
 Four built-in subclasses cover most grouping mechanisms:
 
-    * :class:`~django_auth_ldap.config.PosixGroupType`
-    * :class:`~django_auth_ldap.config.MemberDNGroupType`
-    * :class:`~django_auth_ldap.config.NestedMemberDNGroupType`
+    * :class:`~cool_django_auth_ldap.config.PosixGroupType`
+    * :class:`~cool_django_auth_ldap.config.MemberDNGroupType`
+    * :class:`~cool_django_auth_ldap.config.NestedMemberDNGroupType`
 
 posixGroup and nisNetgroup objects are somewhat specialized, so they get their
 own classes. The other two cover mechanisms whereby a group object stores a list
@@ -23,14 +23,14 @@ variant allows groups to contain other groups, to as many levels as you like.
 For convenience and readability, several trivial subclasses of the above are
 provided:
 
-    * :class:`~django_auth_ldap.config.GroupOfNamesType`
-    * :class:`~django_auth_ldap.config.NestedGroupOfNamesType`
-    * :class:`~django_auth_ldap.config.GroupOfUniqueNamesType`
-    * :class:`~django_auth_ldap.config.NestedGroupOfUniqueNamesType`
-    * :class:`~django_auth_ldap.config.ActiveDirectoryGroupType`
-    * :class:`~django_auth_ldap.config.NestedActiveDirectoryGroupType`
-    * :class:`~django_auth_ldap.config.OrganizationalRoleGroupType`
-    * :class:`~django_auth_ldap.config.NestedOrganizationalRoleGroupType`
+    * :class:`~cool_django_auth_ldap.config.GroupOfNamesType`
+    * :class:`~cool_django_auth_ldap.config.NestedGroupOfNamesType`
+    * :class:`~cool_django_auth_ldap.config.GroupOfUniqueNamesType`
+    * :class:`~cool_django_auth_ldap.config.NestedGroupOfUniqueNamesType`
+    * :class:`~cool_django_auth_ldap.config.ActiveDirectoryGroupType`
+    * :class:`~cool_django_auth_ldap.config.NestedActiveDirectoryGroupType`
+    * :class:`~cool_django_auth_ldap.config.OrganizationalRoleGroupType`
+    * :class:`~cool_django_auth_ldap.config.NestedOrganizationalRoleGroupType`
 
 
 Finding Groups
@@ -38,7 +38,7 @@ Finding Groups
 
 To get started, you'll need to provide some basic information about your LDAP
 groups. :setting:`AUTH_LDAP_GROUP_SEARCH` is an
-:class:`~django_auth_ldap.config.LDAPSearch` object that identifies the set of
+:class:`~cool_django_auth_ldap.config.LDAPSearch` object that identifies the set of
 relevant group objects. That is, all groups that users might belong to as well
 as any others that we might need to know about (in the case of nested groups,
 for example). :setting:`AUTH_LDAP_GROUP_TYPE` is an instance of the class
@@ -49,7 +49,7 @@ configuration must be of this type and part of the search results.
 .. code-block:: python
 
     import ldap
-    from django_auth_ldap.config import LDAPSearch, GroupOfNamesType
+    from cool_django_auth_ldap.config import LDAPSearch, GroupOfNamesType
 
     AUTH_LDAP_GROUP_SEARCH = LDAPSearch(
         "ou=groups,dc=example,dc=com", ldap.SCOPE_SUBTREE, "(objectClass=groupOfNames)"
@@ -73,12 +73,12 @@ the reverse: if given, members of this group will be rejected.
     AUTH_LDAP_DENY_GROUP = "cn=disabled,ou=groups,dc=example,dc=com"
 
 However, these two settings alone may not be enough to satisfy your needs. In
-such cases, you can use the :class:`~django_auth_ldap.config.LDAPGroupQuery`
+such cases, you can use the :class:`~cool_django_auth_ldap.config.LDAPGroupQuery`
 object to perform more complex matches against a user's groups. For example:
 
 .. code-block:: python
 
-    from django_auth_ldap.config import LDAPGroupQuery
+    from cool_django_auth_ldap.config import LDAPGroupQuery
 
     AUTH_LDAP_REQUIRE_GROUP = (
         LDAPGroupQuery("cn=enabled,ou=groups,dc=example,dc=com")

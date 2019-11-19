@@ -67,18 +67,18 @@ from cool_django_auth_ldap.config import (
     LDAPSearch,
     _LDAPConfig,
 )
+from cool_django_auth_ldap.models import GroupMapping
 
-logger = _LDAPConfig.get_logger()
-
+logger = _LDAPConfig.get_logger()  # pylint: disable=invalid-name
 
 # Exported signals
 
 # Allows clients to perform custom user population.
-populate_user = django.dispatch.Signal(providing_args=["user", "ldap_user"])
+populate_user = django.dispatch.Signal(providing_args=["user", "ldap_user"])  # pylint: disable=invalid-name
 
 # Allows clients to inspect and perform special handling of LDAPError
 # exceptions. Exceptions raised by handlers will be propagated out.
-ldap_error = django.dispatch.Signal(providing_args=["context", "user", "exception"])
+ldap_error = django.dispatch.Signal(providing_args=["context", "user", "exception"])  # pylint: disable=invalid-name
 
 
 class LDAPBackend:
@@ -112,6 +112,9 @@ class LDAPBackend:
 
     @property
     def settings(self):
+        """
+        Settings getter
+        """
         if self._settings is None:
             self._settings = LDAPSettings(self.settings_prefix, self.default_settings)
 
@@ -119,10 +122,14 @@ class LDAPBackend:
 
     @settings.setter
     def settings(self, settings):
+        """
+        Settings setter
+        """
         self._settings = settings
 
     @property
     def ldap(self):
+        """LDAP getter"""
         if self._ldap is None:
             options = getattr(django.conf.settings, "AUTH_LDAP_GLOBAL_OPTIONS", None)
 
@@ -130,6 +137,7 @@ class LDAPBackend:
 
         return self._ldap
 
+    # pylint: disable=no-self-use
     def get_user_model(self):
         """
         By default, this will return the model class configured by
@@ -138,11 +146,9 @@ class LDAPBackend:
         """
         return get_user_model()
 
-    #
     # The Django auth backend API
-    #
-
-    def authenticate(self, request, username=None, password=None, **kwargs):
+    def authenticate(self, request, username=None, password=None, **_):
+        """Check user/password agains LDAP"""
         if username is None:
             return None
 
@@ -156,6 +162,7 @@ class LDAPBackend:
         return user
 
     def get_user(self, user_id):
+        """Init or get user from model and init _LDAPUser"""
         user = None
 
         try:
@@ -167,9 +174,11 @@ class LDAPBackend:
         return user
 
     def has_perm(self, user, perm, obj=None):
+        """Check permission"""
         return perm in self.get_all_permissions(user, obj)
 
     def has_module_perms(self, user, app_label):
+        """Check module permission"""
         for perm in self.get_all_permissions(user):
             if perm[: perm.index(".")] == app_label:
                 return True
@@ -177,9 +186,11 @@ class LDAPBackend:
         return False
 
     def get_all_permissions(self, user, obj=None):
+        """Get all user permissions"""
         return self.get_group_permissions(user, obj)
 
-    def get_group_permissions(self, user, obj=None):
+    def get_group_permissions(self, user, _=None):
+        """Get permissions based on LDAP groups"""
         if not hasattr(user, "ldap_user") and self.settings.AUTHORIZE_ALL_USERS:
             _LDAPUser(self, user=user)  # This sets user.ldap_user
 
@@ -195,6 +206,7 @@ class LDAPBackend:
     #
 
     def populate_user(self, username):
+        """Create django user from ldap   """
         ldap_user = _LDAPUser(self, username=username)
         return ldap_user.populate_user()
 
@@ -202,7 +214,8 @@ class LDAPBackend:
     # Hooks for subclasses
     #
 
-    def authenticate_ldap_user(self, ldap_user, password):
+    @staticmethod
+    def authenticate_ldap_user(ldap_user, password):
         """
         Returns an authenticated Django user or None.
         """
@@ -240,10 +253,14 @@ class LDAPBackend:
 
         return (user, built)
 
-    def ldap_to_django_username(self, username):
+    @staticmethod
+    def ldap_to_django_username(username):
+        """convert ldap username to django username"""
         return username
 
-    def django_to_ldap_username(self, username):
+    @staticmethod
+    def django_to_ldap_username(username):
+        """convert django username to ldap username"""
         return username
 
 
@@ -260,6 +277,7 @@ class _LDAPUser:
     to access the ldap module and any hooks that a subclass has overridden.
     """
 
+    # pylint: disable=missing-class-docstring
     class AuthenticationFailed(Exception):
         pass
 
@@ -330,10 +348,12 @@ class _LDAPUser:
 
     @property
     def ldap(self):
+        """LDAP getter"""
         return self.backend.ldap
 
     @property
     def settings(self):
+        """Settings getter"""
         return self.backend.settings
 
     #
@@ -353,23 +373,23 @@ class _LDAPUser:
             self._get_or_create_user()
 
             user = self._user
-        except self.AuthenticationFailed as e:
-            logger.debug("Authentication failed for {}: {}".format(self._username, e))
-        except ldap.LDAPError as e:
+        except self.AuthenticationFailed as err:
+            logger.debug("Authentication failed for {}: {}".format(self._username, err))
+        except ldap.LDAPError as err:
             results = ldap_error.send(
                 self.backend.__class__,
                 context="authenticate",
                 user=self._user,
-                exception=e,
+                exception=err,
             )
             if len(results) == 0:
                 logger.warning(
                     "Caught LDAPError while authenticating {}: {}".format(
-                        self._username, pprint.pformat(e)
+                        self._username, pprint.pformat(err)
                     )
                 )
-        except Exception as e:
-            logger.warning("{} while authenticating {}".format(e, self._username))
+        except Exception as err:
+            logger.warning("{} while authenticating {}".format(err, self._username))
             raise
 
         return user
@@ -386,17 +406,17 @@ class _LDAPUser:
                 try:
                     if self.dn is not None:
                         self._load_group_permissions()
-                except ldap.LDAPError as e:
+                except ldap.LDAPError as err:
                     results = ldap_error.send(
                         self.backend.__class__,
                         context="get_group_permissions",
                         user=self._user,
-                        exception=e,
+                        exception=err,
                     )
                     if len(results) == 0:
                         logger.warning(
                             "Caught LDAPError loading group permissions: {}".format(
-                                pprint.pformat(e)
+                                pprint.pformat(err)
                             )
                         )
 
@@ -415,21 +435,21 @@ class _LDAPUser:
                 self._get_or_create_user(force_populate=True)
 
             user = self._user
-        except ldap.LDAPError as e:
+        except ldap.LDAPError as err:
             results = ldap_error.send(
                 self.backend.__class__,
                 context="populate_user",
                 user=self._user,
-                exception=e,
+                exception=err,
             )
             if len(results) == 0:
                 logger.warning(
                     "Caught LDAPError while authenticating {}: {}".format(
-                        self._username, pprint.pformat(e)
+                        self._username, pprint.pformat(err)
                     )
                 )
-        except Exception as e:
-            logger.warning("{} while authenticating {}".format(e, self._username))
+        except Exception as err:
+            logger.warning("{} while authenticating {}".format(err, self._username))
             raise
 
         return user
@@ -439,7 +459,8 @@ class _LDAPUser:
     #
 
     @property
-    def dn(self):
+    def dn(self):  # pylint: disable=invalid-name
+        """Get user dn"""
         if self._user_dn is None:
             self._load_user_dn()
 
@@ -447,6 +468,7 @@ class _LDAPUser:
 
     @property
     def attrs(self):
+        """Get user args"""
         if self._user_attrs is None:
             self._load_user_attrs()
 
@@ -454,14 +476,17 @@ class _LDAPUser:
 
     @property
     def group_dns(self):
+        """Get dns of user groups"""
         return self._get_groups().get_group_dns()
 
     @property
     def group_names(self):
+        """Get names of user groups"""
         return self._get_groups().get_group_names()
 
     @property
     def connection(self):
+        """Get connection"""
         if not self._connection_bound:
             self._bind()
 
@@ -632,7 +657,10 @@ class _LDAPUser:
         # This has to wait until we're sure the user has a pk.
         if self.settings.MIRROR_GROUPS or self.settings.MIRROR_GROUPS_EXCEPT:
             self._normalize_mirror_settings()
-            self._mirror_groups()
+            if self.settings.USE_GROUP_MAPPING:
+                self._mapping_mirror_groups()
+            else:
+                self._mirror_groups()
 
     def _populate_user(self):
         """
@@ -660,14 +688,15 @@ class _LDAPUser:
         for field, group_dns in self.settings.USER_FLAGS_BY_GROUP.items():
             try:
                 query = self._normalize_group_dns(group_dns)
-            except ValueError as e:
+            except ValueError as err:
                 raise ImproperlyConfigured(
-                    "{}: {}", self.settings._name("USER_FLAGS_BY_GROUP"), e
+                    "{}: {}".format(self.settings.name("USER_FLAGS_BY_GROUP"), err)
                 )
 
             value = query.resolve(self)
             setattr(self._user, field, value)
 
+    # pylint: disable=no-self-use
     def _normalize_group_dns(self, group_dns):
         """
         Converts one or more group DNs to an LDAPGroupQuery.
@@ -696,53 +725,97 @@ class _LDAPUser:
         def malformed_mirror_groups_except():
             return ImproperlyConfigured(
                 "{} must be a collection of group names".format(
-                    self.settings._name("MIRROR_GROUPS_EXCEPT")
+                    self.settings.name("MIRROR_GROUPS_EXCEPT")
                 )
             )
 
         def malformed_mirror_groups():
             return ImproperlyConfigured(
                 "{} must be True or a collection of group names".format(
-                    self.settings._name("MIRROR_GROUPS")
+                    self.settings.name("MIRROR_GROUPS")
                 )
             )
 
-        mge = self.settings.MIRROR_GROUPS_EXCEPT
-        mg = self.settings.MIRROR_GROUPS
+        mirror_groups_except = self.settings.MIRROR_GROUPS_EXCEPT
+        mirror_groups = self.settings.MIRROR_GROUPS
 
-        if mge is not None:
-            if isinstance(mge, (set, frozenset)):
+        if mirror_groups_except is not None and self.settings.USE_GROUP_MAPPING:
+            raise ImproperlyConfigured(
+                "{0} and {1} can't be used in the same time".format(
+                    self.settings.name("MIRROR_GROUPS_EXCEPT"),
+                    self.settings.name("USE_GROUP_MAPPING")
+                )
+            )
+
+        if mirror_groups_except is not None:
+            if isinstance(mirror_groups_except, (set, frozenset)):
                 pass
-            elif isinstance(mge, (list, tuple)):
-                mge = self.settings.MIRROR_GROUPS_EXCEPT = frozenset(mge)
+            elif isinstance(mirror_groups_except, (list, tuple)):
+                mirror_groups_except = self.settings.MIRROR_GROUPS_EXCEPT = frozenset(mirror_groups_except)
             else:
                 raise malformed_mirror_groups_except()
 
-            if not all(isinstance(value, str) for value in mge):
+            if not all(isinstance(value, str) for value in mirror_groups_except):
                 raise malformed_mirror_groups_except()
-            elif mg:
+            if mirror_groups:
                 warnings.warn(
                     ConfigurationWarning(
                         "Ignoring {} in favor of {}".format(
-                            self.settings._name("MIRROR_GROUPS"),
-                            self.settings._name("MIRROR_GROUPS_EXCEPT"),
+                            self.settings.name("MIRROR_GROUPS"),
+                            self.settings.name("MIRROR_GROUPS_EXCEPT"),
                         )
                     )
                 )
-                mg = self.settings.MIRROR_GROUPS = None
+                mirror_groups = self.settings.MIRROR_GROUPS = None
 
-        if mg is not None:
-            if isinstance(mg, (bool, set, frozenset)):
+        if mirror_groups is not None:
+            if isinstance(mirror_groups, (bool, set, frozenset)):
                 pass
-            elif isinstance(mg, (list, tuple)):
-                mg = self.settings.MIRROR_GROUPS = frozenset(mg)
+            elif isinstance(mirror_groups, (list, tuple)):
+                if self.settings.USE_GROUP_MAPPING:
+                    raise ImproperlyConfigured(
+                        "{0} and {1} can't be used in the same time".format(
+                            self.settings.name("MIRROR_GROUPS"),
+                            self.settings.name("USE_GROUP_MAPPING")
+                        )
+                    )
+                mirror_groups = self.settings.MIRROR_GROUPS = frozenset(mirror_groups)
             else:
                 raise malformed_mirror_groups()
 
-            if isinstance(mg, (set, frozenset)) and (
-                not all(isinstance(value, str) for value in mg)
-            ):
+            if isinstance(mirror_groups, (set, frozenset)) and (not all(isinstance(value, str) for value in
+                                                                        mirror_groups)):
                 raise malformed_mirror_groups()
+
+    def _mapping_mirror_groups(self):
+        # Get target LDAP-managed groups
+        ldap_groups = frozenset(self._get_groups().get_group_names())
+        django_target_ldap_groups = frozenset(
+            GroupMapping.objects.select_related("django_group").filter(
+                ldap_group_name__in=ldap_groups
+            ).values_list(
+                "django_group", flat=True
+            ).iterator()
+        )
+
+        # Get ldap-managed and django-managed current groups
+        django_current_all_groups = frozenset(
+            self._user.groups.all().values_list(
+                "id", flat=True
+            ).iterator()
+        )
+        django_current_ldap_groups = frozenset(
+            GroupMapping.objects.select_related("django_group").filter(
+                django_group__in=self._user.groups.all()
+            ).values_list(
+                "django_group", flat=True
+            ).iterator()
+        )
+        django_current_non_ldap_groups = django_current_all_groups - django_current_ldap_groups
+
+        # Calculate new groups as union of target ldap and current non-ldap groups
+        new_groups = django_current_non_ldap_groups.union(django_target_ldap_groups)
+        self._user.groups.set(new_groups)
 
     def _mirror_groups(self):
         """
@@ -755,8 +828,8 @@ class _LDAPUser:
         )
 
         # These were normalized to sets above.
-        MIRROR_GROUPS_EXCEPT = self.settings.MIRROR_GROUPS_EXCEPT
-        MIRROR_GROUPS = self.settings.MIRROR_GROUPS
+        MIRROR_GROUPS_EXCEPT = self.settings.MIRROR_GROUPS_EXCEPT  # pylint: disable=invalid-name
+        MIRROR_GROUPS = self.settings.MIRROR_GROUPS  # pylint: disable=invalid-name
 
         # If the settings are white- or black-listing groups, we'll update
         # target_group_names such that we won't modify the membership of groups
@@ -793,9 +866,15 @@ class _LDAPUser:
         Populates self._group_permissions based on LDAP group membership and
         Django group permissions.
         """
-        group_names = self._get_groups().get_group_names()
+        ldap_group_names = self._get_groups().get_group_names()
 
-        perms = Permission.objects.filter(group__name__in=group_names)
+        if self.settings.USE_GROUP_MAPPING:
+            django_groups = GroupMapping.objects.filter(ldap_group_name__in=ldap_group_names).values_list(
+                "django_group")
+            perms = Permission.objects.filter(group__in=django_groups)
+        else:
+            perms = Permission.objects.filter(group__name__in=ldap_group_names)
+
         perms = perms.values_list("content_type__app_label", "codename")
         perms = perms.order_by()
 
@@ -983,7 +1062,7 @@ class _LDAPUserGroups:
         Memcache keys can't have spaces in them, so we'll remove them from the
         DN for maximum compatibility.
         """
-        dn = self._ldap_user.dn
+        dn = self._ldap_user.dn  # pylint: disable=invalid-name
         return valid_cache_key(
             "auth_ldap.{}.{}.{}".format(self.__class__.__name__, attr_name, dn)
         )
@@ -1023,16 +1102,20 @@ class LDAPSettings:
         "USER_DN_TEMPLATE": None,
         "USER_FLAGS_BY_GROUP": {},
         "USER_SEARCH": None,
+        "USE_GROUP_MAPPING": False,
     }
 
-    def __init__(self, prefix="AUTH_LDAP_", defaults={}):
+    def __init__(self, prefix="AUTH_LDAP_", defaults=None):
         """
         Loads our settings from django.conf.settings, applying defaults for any
         that are omitted.
         """
         self._prefix = prefix
 
-        defaults = dict(self.defaults, **defaults)
+        if isinstance(defaults, dict):
+            defaults = dict(self.defaults, **defaults)
+        else:
+            defaults = self.defaults
 
         for name, default in defaults.items():
             value = getattr(django.conf.settings, prefix + name, default)
@@ -1041,7 +1124,7 @@ class LDAPSettings:
         # Compatibility with old caching settings.
         if getattr(
             django.conf.settings,
-            self._name("CACHE_GROUPS"),
+            self.name("CACHE_GROUPS"),
             defaults.get("CACHE_GROUPS"),
         ):
             warnings.warn(
@@ -1049,13 +1132,15 @@ class LDAPSettings:
                 "AUTH_LDAP_CACHE_TIMEOUT instead.",
                 DeprecationWarning,
             )
+            # pylint: disable=invalid-name
             self.CACHE_TIMEOUT = getattr(
                 django.conf.settings,
-                self._name("GROUP_CACHE_TIMEOUT"),
+                self.name("GROUP_CACHE_TIMEOUT"),
                 defaults.get("GROUP_CACHE_TIMEOUT", 3600),
             )
 
-    def _name(self, suffix):
+    def name(self, suffix):
+        """Apply prefix to parameter name"""
         return self._prefix + suffix
 
 

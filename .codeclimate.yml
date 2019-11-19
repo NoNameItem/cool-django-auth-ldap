@@ -18,6 +18,7 @@ exclude_patterns:
   - "**/migrations/"
   - "**/.idea/"
   - "**/manage.py"
+  - ".pylintrc"
 
 checks:
   argument-count:

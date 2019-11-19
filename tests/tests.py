@@ -53,7 +53,7 @@ from cool_django_auth_ldap.config import (
     NestedMemberDNGroupType,
     PosixGroupType,
 )
-
+from cool_django_auth_ldap.models import GroupMapping
 from .models import TestUser
 
 
@@ -154,459 +154,459 @@ class LDAPTest(TestCase):
         super().setUp()
         cache.clear()
 
-    # def test_options(self):
-    #     self._init_settings(
-    #         USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
-    #         CONNECTION_OPTIONS={ldap.OPT_REFERRALS: 0},
-    #     )
-    #     user = authenticate(username="alice", password="password")
-    #
-    #     self.assertEqual(user.ldap_user.connection.get_option(ldap.OPT_REFERRALS), 0)
-    #
-    # def test_callable_server_uri(self):
-    #     request = RequestFactory().get("/")
-    #     cb_mock = mock.Mock(return_value=self.server.ldap_uri)
-    #
-    #     self._init_settings(
-    #         SERVER_URI=lambda request: cb_mock(request),
-    #         USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
-    #     )
-    #     user_count = User.objects.count()
-    #
-    #     user = authenticate(request=request, username="alice", password="password")
-    #
-    #     self.assertIs(user.has_usable_password(), False)
-    #     self.assertEqual(user.username, "alice")
-    #     self.assertEqual(User.objects.count(), user_count + 1)
-    #     cb_mock.assert_called_with(request)
-    #
-    # def test_deprecated_callable_server_uri(self):
-    #     self._init_settings(
-    #         SERVER_URI=lambda: self.server.ldap_uri,
-    #         USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
-    #     )
-    #     user_count = User.objects.count()
-    #
-    #     with warnings.catch_warnings(record=True) as w:
-    #         warnings.simplefilter("always")
-    #         user = authenticate(username="alice", password="password")
-    #
-    #     self.assertIs(user.has_usable_password(), False)
-    #     self.assertEqual(user.username, "alice")
-    #     self.assertEqual(User.objects.count(), user_count + 1)
-    #     self.assertEqual(len(w), 1)
-    #     self.assertEqual(w[0].category, DeprecationWarning)
-    #     self.assertEqual(
-    #         str(w[0].message),
-    #         "Update AUTH_LDAP_SERVER_URI callable tests.tests.<lambda> to "
-    #         "accept a positional `request` argument. Support for callables "
-    #         "accepting no arguments will be removed in a future version.",
-    #     )
-    #
-    # def test_simple_bind(self):
-    #     self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
-    #     user_count = User.objects.count()
-    #
-    #     user = authenticate(username="alice", password="password")
-    #
-    #     self.assertIs(user.has_usable_password(), False)
-    #     self.assertEqual(user.username, "alice")
-    #     self.assertEqual(User.objects.count(), user_count + 1)
-    #
-    # def test_default_settings(self):
-    #     class MyBackend(LDAPBackend):
-    #         default_settings = {
-    #             "SERVER_URI": self.server.ldap_uri,
-    #             "USER_DN_TEMPLATE": "uid=%(user)s,ou=people,o=test",
-    #         }
-    #
-    #     backend = MyBackend()
-    #
-    #     user_count = User.objects.count()
-    #
-    #     user = backend.authenticate(None, username="alice", password="password")
-    #
-    #     self.assertIs(user.has_usable_password(), False)
-    #     self.assertEqual(user.username, "alice")
-    #     self.assertEqual(User.objects.count(), user_count + 1)
-    #
-    # @_override_settings(
-    #     AUTHENTICATION_BACKENDS=[
-    #         "cool_django_auth_ldap.backend.LDAPBackend",
-    #         "django.contrib.auth.backends.ModelBackend",
-    #     ]
-    # )
-    # def test_login_with_multiple_auth_backends(self):
-    #     self._init_settings(
-    #         USER_SEARCH=LDAPSearch(
-    #             "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
-    #         )
-    #     )
-    #     user = authenticate(username="alice", password="password")
-    #     self.assertIsNotNone(user)
-    #
-    # @_override_settings(
-    #     AUTHENTICATION_BACKENDS=[
-    #         "cool_django_auth_ldap.backend.LDAPBackend",
-    #         "django.contrib.auth.backends.ModelBackend",
-    #     ]
-    # )
-    # def test_bad_login_with_multiple_auth_backends(self):
-    #     self._init_settings(
-    #         USER_SEARCH=LDAPSearch(
-    #             "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
-    #         )
-    #     )
-    #     user = authenticate(username="invalid", password="i_do_not_exist")
-    #     self.assertIsNone(user)
-    #
-    # def test_username_none(self):
-    #     self._init_settings()
-    #     user = authenticate(username=None, password="password")
-    #     self.assertIsNone(user)
-    #
-    # @spy_ldap("simple_bind_s")
-    # def test_simple_bind_escaped(self, mock):
-    #     """ Bind with a username that requires escaping. """
-    #     self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
-    #
-    #     user = authenticate(username="alice,1", password="password")
-    #
-    #     self.assertIsNone(user)
-    #     mock.assert_called_once_with("uid=alice\\,1,ou=people,o=test", "password")
-    #
-    # def test_new_user_lowercase(self):
-    #     self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
-    #     user_count = User.objects.count()
-    #
-    #     user = authenticate(username="Alice", password="password")
-    #
-    #     self.assertIs(user.has_usable_password(), False)
-    #     self.assertEqual(user.username, "alice")
-    #     self.assertEqual(User.objects.count(), user_count + 1)
-    #
-    # def test_deepcopy(self):
-    #     self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
-    #
-    #     user = authenticate(username="Alice", password="password")
-    #     user = deepcopy(user)
-    #
-    # @_override_settings(AUTH_USER_MODEL="tests.TestUser")
-    # def test_auth_custom_user(self):
-    #     self._init_settings(
-    #         USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
-    #         USER_ATTR_MAP={"uid_number": "uidNumber"},
-    #     )
-    #
-    #     user = authenticate(username="Alice", password="password")
-    #
-    #     self.assertIsInstance(user, TestUser)
-    #
-    # @_override_settings(AUTH_USER_MODEL="tests.TestUser")
-    # def test_get_custom_user(self):
-    #     self._init_settings(
-    #         USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
-    #         USER_ATTR_MAP={"uid_number": "uidNumber"},
-    #     )
-    #
-    #     backend = get_backend()
-    #     user = authenticate(username="Alice", password="password")
-    #     user = backend.get_user(user.id)
-    #
-    #     self.assertIsInstance(user, TestUser)
-    #
-    # @_override_settings(AUTH_USER_MODEL="tests.TestUser")
-    # def test_get_custom_field(self):
-    #     self._init_settings(
-    #         USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
-    #         USER_ATTR_MAP={"uid_number": "uidNumber"},
-    #         USER_QUERY_FIELD="uid_number",
-    #     )
-    #     alice = TestUser.objects.create(identifier="abcdef", uid_number=1000)
-    #     user = authenticate(username="Alice", password="password")
-    #     self.assertIsInstance(user, TestUser)
-    #     self.assertEqual(user.pk, alice.pk)
-    #
-    # def test_new_user_whitespace(self):
-    #     self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
-    #     user_count = User.objects.count()
-    #
-    #     user = authenticate(username=" alice", password="password")
-    #     user = authenticate(username="alice ", password="password")
-    #
-    #     self.assertIs(user.has_usable_password(), False)
-    #     self.assertEqual(user.username, "alice")
-    #     self.assertEqual(User.objects.count(), user_count + 1)
-    #
-    # def test_simple_bind_bad_user(self):
-    #     self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
-    #     user_count = User.objects.count()
-    #
-    #     user = authenticate(username="evil_alice", password="password")
-    #
-    #     self.assertIsNone(user)
-    #     self.assertEqual(User.objects.count(), user_count)
-    #
-    # def test_simple_bind_bad_password(self):
-    #     self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
-    #     user_count = User.objects.count()
-    #
-    #     user = authenticate(username="alice", password="bogus")
-    #
-    #     self.assertIsNone(user)
-    #     self.assertEqual(User.objects.count(), user_count)
-    #
-    # def test_existing_user(self):
-    #     self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
-    #     User.objects.create(username="alice")
-    #     user_count = User.objects.count()
-    #
-    #     user = authenticate(username="alice", password="password")
-    #
-    #     # Make sure we only created one user
-    #     self.assertIsNotNone(user)
-    #     self.assertEqual(User.objects.count(), user_count)
-    #
-    # def test_existing_user_insensitive(self):
-    #     self._init_settings(
-    #         USER_SEARCH=LDAPSearch(
-    #             "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
-    #         )
-    #     )
-    #     User.objects.create(username="alice")
-    #
-    #     user = authenticate(username="Alice", password="password")
-    #
-    #     self.assertIsNotNone(user)
-    #     self.assertEqual(user.username, "alice")
-    #     self.assertEqual(User.objects.count(), 1)
-    #
-    # def test_convert_username(self):
-    #     self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
-    #
-    #     class MyBackend(LDAPBackend):
-    #         def ldap_to_django_username(self, username):
-    #             return "ldap_%s" % username
-    #
-    #         def django_to_ldap_username(self, username):
-    #             return username[5:]
-    #
-    #     backend = MyBackend()
-    #     user_count = User.objects.count()
-    #
-    #     user1 = backend.authenticate(None, username="alice", password="password")
-    #     user2 = backend.get_user(user1.pk)
-    #
-    #     self.assertEqual(User.objects.count(), user_count + 1)
-    #     self.assertEqual(user1.username, "ldap_alice")
-    #     self.assertEqual(user1.ldap_user._username, "alice")
-    #     self.assertEqual(user1.ldap_username, "alice")
-    #     self.assertEqual(user2.username, "ldap_alice")
-    #     self.assertEqual(user2.ldap_user._username, "alice")
-    #     self.assertEqual(user2.ldap_username, "alice")
-    #
-    # def test_search_bind(self):
-    #     self._init_settings(
-    #         USER_SEARCH=LDAPSearch(
-    #             "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
-    #         )
-    #     )
-    #     user_count = User.objects.count()
-    #
-    #     user = authenticate(username="alice", password="password")
-    #
-    #     self.assertIsNotNone(user)
-    #     self.assertEqual(User.objects.count(), user_count + 1)
-    #
-    # @spy_ldap("search_s")
-    # def test_search_bind_escaped(self, mock):
-    #     """ Search for a username that requires escaping. """
-    #     self._init_settings(
-    #         USER_SEARCH=LDAPSearch(
-    #             "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
-    #         )
-    #     )
-    #
-    #     user = authenticate(username="alice*", password="password")
-    #
-    #     self.assertIsNone(user)
-    #     mock.assert_called_once_with(
-    #         "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=alice\\2a)", None
-    #     )
-    #
-    # def test_search_bind_no_user(self):
-    #     self._init_settings(
-    #         USER_SEARCH=LDAPSearch(
-    #             "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uidNumber=%(user)s)"
-    #         )
-    #     )
-    #
-    #     user = authenticate(username="alice", password="password")
-    #
-    #     self.assertIsNone(user)
-    #
-    # def test_search_bind_multiple_users(self):
-    #     self._init_settings(
-    #         USER_SEARCH=LDAPSearch("ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=*)")
-    #     )
-    #
-    #     user = authenticate(username="alice", password="password")
-    #
-    #     self.assertIsNone(user)
-    #
-    # def test_search_bind_bad_password(self):
-    #     self._init_settings(
-    #         USER_SEARCH=LDAPSearch(
-    #             "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
-    #         )
-    #     )
-    #
-    #     user = authenticate(username="alice", password="bogus")
-    #
-    #     self.assertIsNone(user)
-    #
-    # def test_search_bind_with_credentials(self):
-    #     self._init_settings(
-    #         BIND_DN="uid=bob,ou=people,o=test",
-    #         BIND_PASSWORD="password",
-    #         USER_SEARCH=LDAPSearch(
-    #             "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
-    #         ),
-    #     )
-    #
-    #     user = authenticate(username="alice", password="password")
-    #
-    #     self.assertIsNotNone(user)
-    #     self.assertIsNotNone(user.ldap_user)
-    #     self.assertEqual(user.ldap_user.dn, "uid=alice,ou=people,o=test")
-    #     self.assertEqual(
-    #         dict(user.ldap_user.attrs),
-    #         {
-    #             "objectClass": [
-    #                 "person",
-    #                 "organizationalPerson",
-    #                 "inetOrgPerson",
-    #                 "posixAccount",
-    #             ],
-    #             "cn": ["alice"],
-    #             "uid": ["alice"],
-    #             "userPassword": ["password"],
-    #             "uidNumber": ["1000"],
-    #             "gidNumber": ["1000"],
-    #             "givenName": ["Alice"],
-    #             "sn": ["Adams"],
-    #             "homeDirectory": ["/home/alice"],
-    #         },
-    #     )
-    #
-    # def test_search_bind_with_bad_credentials(self):
-    #     self._init_settings(
-    #         BIND_DN="uid=bob,ou=people,o=test",
-    #         BIND_PASSWORD="bogus",
-    #         USER_SEARCH=LDAPSearch(
-    #             "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
-    #         ),
-    #     )
-    #
-    #     user = authenticate(username="alice", password="password")
-    #
-    #     self.assertIsNone(user)
-    #
-    # def test_unicode_user(self):
-    #     self._init_settings(
-    #         USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
-    #         USER_ATTR_MAP={"first_name": "givenName", "last_name": "sn"},
-    #     )
-    #
-    #     user = authenticate(username="dreßler", password="password")
-    #     self.assertIsNotNone(user)
-    #     self.assertEqual(user.username, "dreßler")
-    #     self.assertEqual(user.last_name, "Dreßler")
-    #
-    # def test_cidict(self):
-    #     self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
-    #
-    #     user = authenticate(username="alice", password="password")
-    #
-    #     self.assertIsInstance(user.ldap_user.attrs, ldap.cidict.cidict)
-    #
-    # def test_populate_user(self):
-    #     self._init_settings(
-    #         USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
-    #         USER_ATTR_MAP={"first_name": "givenName", "last_name": "sn"},
-    #     )
-    #
-    #     user = authenticate(username="alice", password="password")
-    #
-    #     self.assertEqual(user.username, "alice")
-    #     self.assertEqual(user.first_name, "Alice")
-    #     self.assertEqual(user.last_name, "Adams")
-    #
-    # def test_populate_user_with_missing_attribute(self):
-    #     self._init_settings(
-    #         USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
-    #         USER_ATTR_MAP={
-    #             "first_name": "givenName",
-    #             "last_name": "sn",
-    #             "email": "mail",
-    #         },
-    #     )
-    #
-    #     user = authenticate(username="alice", password="password")
-    #     self.assertEqual(user.username, "alice")
-    #     self.assertEqual(user.first_name, "Alice")
-    #     self.assertEqual(user.last_name, "Adams")
-    #     self.assertEqual(user.email, "")
-    #
-    # @mock.patch.object(LDAPSearch, "execute", return_value=None)
-    # def test_populate_user_with_bad_search(self, mock_execute):
-    #     self._init_settings(
-    #         USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
-    #         USER_ATTR_MAP={"first_name": "givenName", "last_name": "sn"},
-    #     )
-    #
-    #     user = authenticate(username="alice", password="password")
-    #     self.assertEqual(user.username, "alice")
-    #     self.assertEqual(user.first_name, "")
-    #     self.assertEqual(user.last_name, "")
-    #
-    # @_override_settings(AUTH_USER_MODEL="tests.TestUser")
-    # def test_authenticate_with_buggy_setter_raises_exception(self):
-    #     self._init_settings(
-    #         USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
-    #         USER_ATTR_MAP={"first_name": "givenName", "uid_number": "uidNumber"},
-    #     )
-    #
-    #     with self.assertRaisesMessage(Exception, "Oops..."):
-    #         authenticate(username="alice", password="password")
-    #
-    # @_override_settings(AUTH_USER_MODEL="tests.TestUser")
-    # def test_populate_user_with_buggy_setter_raises_exception(self):
-    #     self._init_settings(
-    #         USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
-    #         USER_ATTR_MAP={"first_name": "givenName", "uid_number": "uidNumber"},
-    #     )
-    #
-    #     backend = get_backend()
-    #     with self.assertRaisesMessage(Exception, "Oops..."):
-    #         backend.populate_user("alice")
-    #
-    # @spy_ldap("search_s")
-    # def test_populate_with_attrlist(self, mock):
-    #     self._init_settings(
-    #         USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
-    #         USER_ATTR_MAP={"first_name": "givenName", "last_name": "sn"},
-    #         USER_ATTRLIST=["*", "+"],
-    #     )
-    #
-    #     user = authenticate(username="alice", password="password")
-    #
-    #     self.assertEqual(user.username, "alice")
-    #
-    #     # lookup user attrs
-    #     mock.assert_called_once_with(
-    #         "uid=alice,ou=people,o=test", ldap.SCOPE_BASE, "(objectClass=*)", ["*", "+"]
-    #     )
+    def test_options(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            CONNECTION_OPTIONS={ldap.OPT_REFERRALS: 0},
+        )
+        user = authenticate(username="alice", password="password")
+
+        self.assertEqual(user.ldap_user.connection.get_option(ldap.OPT_REFERRALS), 0)
+
+    def test_callable_server_uri(self):
+        request = RequestFactory().get("/")
+        cb_mock = mock.Mock(return_value=self.server.ldap_uri)
+
+        self._init_settings(
+            SERVER_URI=lambda request: cb_mock(request),
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+        )
+        user_count = User.objects.count()
+
+        user = authenticate(request=request, username="alice", password="password")
+
+        self.assertIs(user.has_usable_password(), False)
+        self.assertEqual(user.username, "alice")
+        self.assertEqual(User.objects.count(), user_count + 1)
+        cb_mock.assert_called_with(request)
+
+    def test_deprecated_callable_server_uri(self):
+        self._init_settings(
+            SERVER_URI=lambda: self.server.ldap_uri,
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+        )
+        user_count = User.objects.count()
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            user = authenticate(username="alice", password="password")
+
+        self.assertIs(user.has_usable_password(), False)
+        self.assertEqual(user.username, "alice")
+        self.assertEqual(User.objects.count(), user_count + 1)
+        self.assertEqual(len(w), 1)
+        self.assertEqual(w[0].category, DeprecationWarning)
+        self.assertEqual(
+            str(w[0].message),
+            "Update AUTH_LDAP_SERVER_URI callable tests.tests.<lambda> to "
+            "accept a positional `request` argument. Support for callables "
+            "accepting no arguments will be removed in a future version.",
+        )
+
+    def test_simple_bind(self):
+        self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
+        user_count = User.objects.count()
+
+        user = authenticate(username="alice", password="password")
+
+        self.assertIs(user.has_usable_password(), False)
+        self.assertEqual(user.username, "alice")
+        self.assertEqual(User.objects.count(), user_count + 1)
+
+    def test_default_settings(self):
+        class MyBackend(LDAPBackend):
+            default_settings = {
+                "SERVER_URI": self.server.ldap_uri,
+                "USER_DN_TEMPLATE": "uid=%(user)s,ou=people,o=test",
+            }
+
+        backend = MyBackend()
+
+        user_count = User.objects.count()
+
+        user = backend.authenticate(None, username="alice", password="password")
+
+        self.assertIs(user.has_usable_password(), False)
+        self.assertEqual(user.username, "alice")
+        self.assertEqual(User.objects.count(), user_count + 1)
+
+    @_override_settings(
+        AUTHENTICATION_BACKENDS=[
+            "cool_django_auth_ldap.backend.LDAPBackend",
+            "django.contrib.auth.backends.ModelBackend",
+        ]
+    )
+    def test_login_with_multiple_auth_backends(self):
+        self._init_settings(
+            USER_SEARCH=LDAPSearch(
+                "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
+            )
+        )
+        user = authenticate(username="alice", password="password")
+        self.assertIsNotNone(user)
+
+    @_override_settings(
+        AUTHENTICATION_BACKENDS=[
+            "cool_django_auth_ldap.backend.LDAPBackend",
+            "django.contrib.auth.backends.ModelBackend",
+        ]
+    )
+    def test_bad_login_with_multiple_auth_backends(self):
+        self._init_settings(
+            USER_SEARCH=LDAPSearch(
+                "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
+            )
+        )
+        user = authenticate(username="invalid", password="i_do_not_exist")
+        self.assertIsNone(user)
+
+    def test_username_none(self):
+        self._init_settings()
+        user = authenticate(username=None, password="password")
+        self.assertIsNone(user)
+
+    @spy_ldap("simple_bind_s")
+    def test_simple_bind_escaped(self, mock):
+        """ Bind with a username that requires escaping. """
+        self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
+
+        user = authenticate(username="alice,1", password="password")
+
+        self.assertIsNone(user)
+        mock.assert_called_once_with("uid=alice\\,1,ou=people,o=test", "password")
+
+    def test_new_user_lowercase(self):
+        self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
+        user_count = User.objects.count()
+
+        user = authenticate(username="Alice", password="password")
+
+        self.assertIs(user.has_usable_password(), False)
+        self.assertEqual(user.username, "alice")
+        self.assertEqual(User.objects.count(), user_count + 1)
+
+    def test_deepcopy(self):
+        self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
+
+        user = authenticate(username="Alice", password="password")
+        user = deepcopy(user)
+
+    @_override_settings(AUTH_USER_MODEL="tests.TestUser")
+    def test_auth_custom_user(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            USER_ATTR_MAP={"uid_number": "uidNumber"},
+        )
+
+        user = authenticate(username="Alice", password="password")
+
+        self.assertIsInstance(user, TestUser)
+
+    @_override_settings(AUTH_USER_MODEL="tests.TestUser")
+    def test_get_custom_user(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            USER_ATTR_MAP={"uid_number": "uidNumber"},
+        )
+
+        backend = get_backend()
+        user = authenticate(username="Alice", password="password")
+        user = backend.get_user(user.id)
+
+        self.assertIsInstance(user, TestUser)
+
+    @_override_settings(AUTH_USER_MODEL="tests.TestUser")
+    def test_get_custom_field(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            USER_ATTR_MAP={"uid_number": "uidNumber"},
+            USER_QUERY_FIELD="uid_number",
+        )
+        alice = TestUser.objects.create(identifier="abcdef", uid_number=1000)
+        user = authenticate(username="Alice", password="password")
+        self.assertIsInstance(user, TestUser)
+        self.assertEqual(user.pk, alice.pk)
+
+    def test_new_user_whitespace(self):
+        self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
+        user_count = User.objects.count()
+
+        user = authenticate(username=" alice", password="password")
+        user = authenticate(username="alice ", password="password")
+
+        self.assertIs(user.has_usable_password(), False)
+        self.assertEqual(user.username, "alice")
+        self.assertEqual(User.objects.count(), user_count + 1)
+
+    def test_simple_bind_bad_user(self):
+        self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
+        user_count = User.objects.count()
+
+        user = authenticate(username="evil_alice", password="password")
+
+        self.assertIsNone(user)
+        self.assertEqual(User.objects.count(), user_count)
+
+    def test_simple_bind_bad_password(self):
+        self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
+        user_count = User.objects.count()
+
+        user = authenticate(username="alice", password="bogus")
+
+        self.assertIsNone(user)
+        self.assertEqual(User.objects.count(), user_count)
+
+    def test_existing_user(self):
+        self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
+        User.objects.create(username="alice")
+        user_count = User.objects.count()
+
+        user = authenticate(username="alice", password="password")
+
+        # Make sure we only created one user
+        self.assertIsNotNone(user)
+        self.assertEqual(User.objects.count(), user_count)
+
+    def test_existing_user_insensitive(self):
+        self._init_settings(
+            USER_SEARCH=LDAPSearch(
+                "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
+            )
+        )
+        User.objects.create(username="alice")
+
+        user = authenticate(username="Alice", password="password")
+
+        self.assertIsNotNone(user)
+        self.assertEqual(user.username, "alice")
+        self.assertEqual(User.objects.count(), 1)
+
+    def test_convert_username(self):
+        self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
+
+        class MyBackend(LDAPBackend):
+            def ldap_to_django_username(self, username):
+                return "ldap_%s" % username
+
+            def django_to_ldap_username(self, username):
+                return username[5:]
+
+        backend = MyBackend()
+        user_count = User.objects.count()
+
+        user1 = backend.authenticate(None, username="alice", password="password")
+        user2 = backend.get_user(user1.pk)
+
+        self.assertEqual(User.objects.count(), user_count + 1)
+        self.assertEqual(user1.username, "ldap_alice")
+        self.assertEqual(user1.ldap_user._username, "alice")
+        self.assertEqual(user1.ldap_username, "alice")
+        self.assertEqual(user2.username, "ldap_alice")
+        self.assertEqual(user2.ldap_user._username, "alice")
+        self.assertEqual(user2.ldap_username, "alice")
+
+    def test_search_bind(self):
+        self._init_settings(
+            USER_SEARCH=LDAPSearch(
+                "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
+            )
+        )
+        user_count = User.objects.count()
+
+        user = authenticate(username="alice", password="password")
+
+        self.assertIsNotNone(user)
+        self.assertEqual(User.objects.count(), user_count + 1)
+
+    @spy_ldap("search_s")
+    def test_search_bind_escaped(self, mock):
+        """ Search for a username that requires escaping. """
+        self._init_settings(
+            USER_SEARCH=LDAPSearch(
+                "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
+            )
+        )
+
+        user = authenticate(username="alice*", password="password")
+
+        self.assertIsNone(user)
+        mock.assert_called_once_with(
+            "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=alice\\2a)", None
+        )
+
+    def test_search_bind_no_user(self):
+        self._init_settings(
+            USER_SEARCH=LDAPSearch(
+                "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uidNumber=%(user)s)"
+            )
+        )
+
+        user = authenticate(username="alice", password="password")
+
+        self.assertIsNone(user)
+
+    def test_search_bind_multiple_users(self):
+        self._init_settings(
+            USER_SEARCH=LDAPSearch("ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=*)")
+        )
+
+        user = authenticate(username="alice", password="password")
+
+        self.assertIsNone(user)
+
+    def test_search_bind_bad_password(self):
+        self._init_settings(
+            USER_SEARCH=LDAPSearch(
+                "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
+            )
+        )
+
+        user = authenticate(username="alice", password="bogus")
+
+        self.assertIsNone(user)
+
+    def test_search_bind_with_credentials(self):
+        self._init_settings(
+            BIND_DN="uid=bob,ou=people,o=test",
+            BIND_PASSWORD="password",
+            USER_SEARCH=LDAPSearch(
+                "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
+            ),
+        )
+
+        user = authenticate(username="alice", password="password")
+
+        self.assertIsNotNone(user)
+        self.assertIsNotNone(user.ldap_user)
+        self.assertEqual(user.ldap_user.dn, "uid=alice,ou=people,o=test")
+        self.assertEqual(
+            dict(user.ldap_user.attrs),
+            {
+                "objectClass": [
+                    "person",
+                    "organizationalPerson",
+                    "inetOrgPerson",
+                    "posixAccount",
+                ],
+                "cn": ["alice"],
+                "uid": ["alice"],
+                "userPassword": ["password"],
+                "uidNumber": ["1000"],
+                "gidNumber": ["1000"],
+                "givenName": ["Alice"],
+                "sn": ["Adams"],
+                "homeDirectory": ["/home/alice"],
+            },
+        )
+
+    def test_search_bind_with_bad_credentials(self):
+        self._init_settings(
+            BIND_DN="uid=bob,ou=people,o=test",
+            BIND_PASSWORD="bogus",
+            USER_SEARCH=LDAPSearch(
+                "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
+            ),
+        )
+
+        user = authenticate(username="alice", password="password")
+
+        self.assertIsNone(user)
+
+    def test_unicode_user(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            USER_ATTR_MAP={"first_name": "givenName", "last_name": "sn"},
+        )
+
+        user = authenticate(username="dreßler", password="password")
+        self.assertIsNotNone(user)
+        self.assertEqual(user.username, "dreßler")
+        self.assertEqual(user.last_name, "Dreßler")
+
+    def test_cidict(self):
+        self._init_settings(USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test")
+
+        user = authenticate(username="alice", password="password")
+
+        self.assertIsInstance(user.ldap_user.attrs, ldap.cidict.cidict)
+
+    def test_populate_user(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            USER_ATTR_MAP={"first_name": "givenName", "last_name": "sn"},
+        )
+
+        user = authenticate(username="alice", password="password")
+
+        self.assertEqual(user.username, "alice")
+        self.assertEqual(user.first_name, "Alice")
+        self.assertEqual(user.last_name, "Adams")
+
+    def test_populate_user_with_missing_attribute(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            USER_ATTR_MAP={
+                "first_name": "givenName",
+                "last_name": "sn",
+                "email": "mail",
+            },
+        )
+
+        user = authenticate(username="alice", password="password")
+        self.assertEqual(user.username, "alice")
+        self.assertEqual(user.first_name, "Alice")
+        self.assertEqual(user.last_name, "Adams")
+        self.assertEqual(user.email, "")
+
+    @mock.patch.object(LDAPSearch, "execute", return_value=None)
+    def test_populate_user_with_bad_search(self, mock_execute):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            USER_ATTR_MAP={"first_name": "givenName", "last_name": "sn"},
+        )
+
+        user = authenticate(username="alice", password="password")
+        self.assertEqual(user.username, "alice")
+        self.assertEqual(user.first_name, "")
+        self.assertEqual(user.last_name, "")
+
+    @_override_settings(AUTH_USER_MODEL="tests.TestUser")
+    def test_authenticate_with_buggy_setter_raises_exception(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            USER_ATTR_MAP={"first_name": "givenName", "uid_number": "uidNumber"},
+        )
+
+        with self.assertRaisesMessage(Exception, "Oops..."):
+            authenticate(username="alice", password="password")
+
+    @_override_settings(AUTH_USER_MODEL="tests.TestUser")
+    def test_populate_user_with_buggy_setter_raises_exception(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            USER_ATTR_MAP={"first_name": "givenName", "uid_number": "uidNumber"},
+        )
+
+        backend = get_backend()
+        with self.assertRaisesMessage(Exception, "Oops..."):
+            backend.populate_user("alice")
+
+    @spy_ldap("search_s")
+    def test_populate_with_attrlist(self, mock):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            USER_ATTR_MAP={"first_name": "givenName", "last_name": "sn"},
+            USER_ATTRLIST=["*", "+"],
+        )
+
+        user = authenticate(username="alice", password="password")
+
+        self.assertEqual(user.username, "alice")
+
+        # lookup user attrs
+        mock.assert_called_once_with(
+            "uid=alice,ou=people,o=test", ldap.SCOPE_BASE, "(objectClass=*)", ["*", "+"]
+        )
 
     def test_bind_as_user(self):
         self._init_settings(
@@ -1037,6 +1037,29 @@ class LDAPTest(TestCase):
         self.assertIs(backend.has_perm(alice, "auth.add_user"), True)
         self.assertIs(backend.has_module_perms(alice, "auth"), True)
 
+    def test_mapping_dn_group_permissions(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            GROUP_SEARCH=LDAPSearch("ou=groups,o=test", ldap.SCOPE_SUBTREE),
+            GROUP_TYPE=MemberDNGroupType(member_attr="member"),
+            FIND_GROUP_PERMS=True,
+            USE_GROUP_MAPPING=True
+        )
+        self._init_groups_with_mapping()
+
+        backend = get_backend()
+        alice = User.objects.create(username="alice")
+        alice = backend.get_user(alice.pk)
+
+        self.assertEqual(
+            backend.get_group_permissions(alice), {"auth.add_group", "auth.delete_user"}
+        )
+        self.assertEqual(
+            backend.get_all_permissions(alice), {"auth.add_group", "auth.delete_user"}
+        )
+        self.assertIs(backend.has_perm(alice, "auth.add_group"), True)
+        self.assertIs(backend.has_module_perms(alice, "auth"), True)
+
     def test_group_permissions_ldap_error(self):
         self._init_settings(
             BIND_DN="uid=bob,ou=people,o=test",
@@ -1047,6 +1070,24 @@ class LDAPTest(TestCase):
             FIND_GROUP_PERMS=True,
         )
         self._init_groups()
+
+        backend = get_backend()
+        alice = User.objects.create(username="alice")
+        alice = backend.get_user(alice.pk)
+
+        self.assertEqual(backend.get_group_permissions(alice), set())
+
+    def test_mapping_group_permissions_ldap_error(self):
+        self._init_settings(
+            BIND_DN="uid=bob,ou=people,o=test",
+            BIND_PASSWORD="bogus",
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            GROUP_SEARCH=LDAPSearch("ou=groups,o=test", ldap.SCOPE_SUBTREE),
+            GROUP_TYPE=MemberDNGroupType(member_attr="member"),
+            FIND_GROUP_PERMS=True,
+            USE_GROUP_MAPPING=True
+        )
+        self._init_groups_with_mapping()
 
         backend = get_backend()
         alice = User.objects.create(username="alice")
@@ -1072,6 +1113,25 @@ class LDAPTest(TestCase):
         self.assertIs(backend.has_perm(bob, "auth.add_user"), False)
         self.assertIs(backend.has_module_perms(bob, "auth"), False)
 
+    def test_mapping_empty_group_permissions(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            GROUP_SEARCH=LDAPSearch("ou=groups,o=test", ldap.SCOPE_SUBTREE),
+            GROUP_TYPE=MemberDNGroupType(member_attr="member"),
+            FIND_GROUP_PERMS=True,
+            USE_GROUP_MAPPING=True
+        )
+        self._init_groups_with_mapping()
+
+        backend = get_backend()
+        bob = User.objects.create(username="bob")
+        bob = backend.get_user(bob.pk)
+
+        self.assertEqual(backend.get_group_permissions(bob), set())
+        self.assertEqual(backend.get_all_permissions(bob), set())
+        self.assertIs(backend.has_perm(bob, "auth.add_group"), False)
+        self.assertIs(backend.has_module_perms(bob, "auth"), False)
+
     def test_posix_group_permissions(self):
         self._init_settings(
             USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
@@ -1094,6 +1154,31 @@ class LDAPTest(TestCase):
             backend.get_all_permissions(alice), {"auth.add_user", "auth.change_user"}
         )
         self.assertIs(backend.has_perm(alice, "auth.add_user"), True)
+        self.assertIs(backend.has_module_perms(alice, "auth"), True)
+
+    def test_mapping_posix_group_permissions(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            GROUP_SEARCH=LDAPSearch(
+                "ou=groups,o=test", ldap.SCOPE_SUBTREE, "(objectClass=posixGroup)"
+            ),
+            GROUP_TYPE=PosixGroupType(),
+            FIND_GROUP_PERMS=True,
+            USE_GROUP_MAPPING=True,
+        )
+        self._init_groups_with_mapping()
+
+        backend = get_backend()
+        alice = User.objects.create(username="alice")
+        alice = backend.get_user(alice.pk)
+
+        self.assertEqual(
+            backend.get_group_permissions(alice), {"auth.add_group", "auth.delete_user"}
+        )
+        self.assertEqual(
+            backend.get_all_permissions(alice), {"auth.add_group", "auth.delete_user"}
+        )
+        self.assertIs(backend.has_perm(alice, "auth.add_group"), True)
         self.assertIs(backend.has_module_perms(alice, "auth"), True)
 
     def test_posix_group_permissions_no_gid(self):
@@ -1121,6 +1206,32 @@ class LDAPTest(TestCase):
         self.assertIs(backend.has_perm(nonposix, "auth.add_user"), True)
         self.assertIs(backend.has_module_perms(nonposix, "auth"), True)
 
+    def test_mapping_posix_group_permissions_no_gid(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            GROUP_SEARCH=LDAPSearch(
+                "ou=groups,o=test", ldap.SCOPE_SUBTREE, "(objectClass=posixGroup)"
+            ),
+            GROUP_TYPE=PosixGroupType(),
+            FIND_GROUP_PERMS=True,
+            USE_GROUP_MAPPING=True,
+        )
+        self._init_groups_with_mapping()
+
+        backend = get_backend()
+        nonposix = User.objects.create(username="nonposix")
+        nonposix = backend.get_user(nonposix.pk)
+
+        self.assertEqual(
+            backend.get_group_permissions(nonposix),
+            {"auth.add_group", "auth.delete_user"},
+        )
+        self.assertEqual(
+            backend.get_all_permissions(nonposix), {"auth.add_group", "auth.delete_user"}
+        )
+        self.assertIs(backend.has_perm(nonposix, "auth.delete_user"), True)
+        self.assertIs(backend.has_module_perms(nonposix, "auth"), True)
+
     def test_foreign_user_permissions(self):
         self._init_settings(
             USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
@@ -1129,6 +1240,21 @@ class LDAPTest(TestCase):
             FIND_GROUP_PERMS=True,
         )
         self._init_groups()
+
+        backend = get_backend()
+        alice = User.objects.create(username="alice")
+
+        self.assertEqual(backend.get_group_permissions(alice), set())
+
+    def test_mapping_foreign_user_permissions(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            GROUP_SEARCH=LDAPSearch("ou=groups,o=test", ldap.SCOPE_SUBTREE),
+            GROUP_TYPE=MemberDNGroupType(member_attr="member"),
+            FIND_GROUP_PERMS=True,
+            USE_GROUP_MAPPING=True,
+        )
+        self._init_groups_with_mapping()
 
         backend = get_backend()
         alice = User.objects.create(username="alice")
@@ -1164,6 +1290,36 @@ class LDAPTest(TestCase):
         # Should have executed one LDAP search per user
         self.assertEqual(mock.call_count, 2)
 
+    @spy_ldap("search_s")
+    def test_mapping_group_cache(self, mock):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            GROUP_SEARCH=LDAPSearch("ou=groups,o=test", ldap.SCOPE_SUBTREE),
+            GROUP_TYPE=MemberDNGroupType(member_attr="member"),
+            FIND_GROUP_PERMS=True,
+            CACHE_TIMEOUT=3600,
+            USE_GROUP_MAPPING=True,
+        )
+        self._init_groups_with_mapping()
+
+        backend = get_backend()
+        alice_id = User.objects.create(username="alice").pk
+        bob_id = User.objects.create(username="bob").pk
+
+        # Check permissions twice for each user
+        for i in range(2):
+            alice = backend.get_user(alice_id)
+            self.assertEqual(
+                backend.get_group_permissions(alice),
+                {"auth.add_group", "auth.delete_user"},
+            )
+
+            bob = backend.get_user(bob_id)
+            self.assertEqual(backend.get_group_permissions(bob), set())
+
+        # Should have executed one LDAP search per user
+        self.assertEqual(mock.call_count, 2)
+
     def test_group_mirroring(self):
         self._init_settings(
             USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
@@ -1180,6 +1336,50 @@ class LDAPTest(TestCase):
 
         self.assertEqual(Group.objects.count(), 3)
         self.assertEqual(set(alice.groups.all()), set(Group.objects.all()))
+
+    def test_mapping_group_mirroring_empty_mapping(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            GROUP_SEARCH=LDAPSearch(
+                "ou=groups,o=test", ldap.SCOPE_SUBTREE, "(objectClass=posixGroup)"
+            ),
+            GROUP_TYPE=PosixGroupType(),
+            MIRROR_GROUPS=True,
+            USE_GROUP_MAPPING=True,
+        )
+
+        self.assertEqual(Group.objects.count(), 0)
+
+        alice = authenticate(username="alice", password="password")
+
+        self.assertEqual(Group.objects.count(), 0)
+        self.assertEqual(alice.groups.count(), 0)
+
+    def test_mapping_group_mirroring_nonempty_mapping(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            GROUP_SEARCH=LDAPSearch(
+                "ou=groups,o=test", ldap.SCOPE_SUBTREE, "(objectClass=posixGroup)"
+            ),
+            GROUP_TYPE=PosixGroupType(),
+            MIRROR_GROUPS=True,
+            USE_GROUP_MAPPING=True,
+        )
+
+        self.assertEqual(Group.objects.count(), 0)
+
+        GroupMapping.objects.create(django_group=Group.objects.create(name="django_active_px"),
+                                 ldap_group_name="active_px")
+        GroupMapping.objects.create(django_group=Group.objects.create(name="django_staff_px"), ldap_group_name="staff_px")
+        Group.objects.create(name="non-ldap-group")
+
+        alice = authenticate(username="alice", password="password")
+
+        self.assertEqual(alice.groups.count(), 2)
+        self.assertEqual(
+            set(alice.groups.all().values_list("name", flat=True)),
+            {"django_active_px", "django_staff_px"}
+        )
 
     def test_nested_group_mirroring(self):
         self._init_settings(
@@ -1205,6 +1405,207 @@ class LDAPTest(TestCase):
             },
         )
         self.assertEqual(set(alice.groups.all()), set(Group.objects.all()))
+
+    def test_mapping_nested_group_mirroring_empty_mapping(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            GROUP_SEARCH=LDAPSearch(
+                "ou=groups,o=test", ldap.SCOPE_SUBTREE, "(objectClass=groupOfNames)"
+            ),
+            GROUP_TYPE=NestedMemberDNGroupType(member_attr="member"),
+            MIRROR_GROUPS=True,
+            USE_GROUP_MAPPING=True,
+        )
+
+        Group.objects.create(name="django_active_gon")
+        Group.objects.create(name="django_staff_gon")
+
+        alice = authenticate(username="alice", password="password")
+
+        self.assertEqual(
+            set(Group.objects.all().values_list("name", flat=True)),
+            {"django_active_gon", "django_staff_gon"},
+        )
+        self.assertEqual(set(alice.groups.all()), set())
+
+    def test_mapping_nested_group_mirroring_full_mapping(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            GROUP_SEARCH=LDAPSearch(
+                "ou=groups,o=test", ldap.SCOPE_SUBTREE, "(objectClass=groupOfNames)"
+            ),
+            GROUP_TYPE=NestedMemberDNGroupType(member_attr="member"),
+            MIRROR_GROUPS=True,
+            USE_GROUP_MAPPING=True,
+        )
+
+        active = Group.objects.create(name="django_active_gon")
+        staff = Group.objects.create(name="django_staff_gon")
+        superuser = Group.objects.create(name="django_superuser_gon")
+        nested = Group.objects.create(name="django_nested_gon")
+        parent = Group.objects.create(name="django_parent_gon")
+        circular = Group.objects.create(name="django_circular_gon")
+
+        GroupMapping.objects.create(django_group=active, ldap_group_name="active_gon")
+        GroupMapping.objects.create(django_group=staff, ldap_group_name="staff_gon")
+        GroupMapping.objects.create(django_group=superuser, ldap_group_name="superuser_gon")
+        GroupMapping.objects.create(django_group=nested, ldap_group_name="nested_gon")
+        GroupMapping.objects.create(django_group=parent, ldap_group_name="parent_gon")
+        GroupMapping.objects.create(django_group=circular, ldap_group_name="circular_gon")
+
+        alice = authenticate(username="alice", password="password")
+
+        self.assertEqual(
+            set(Group.objects.all().values_list("name", flat=True)),
+            {
+                "django_active_gon",
+                "django_staff_gon",
+                "django_superuser_gon",
+                "django_nested_gon",
+                "django_parent_gon",
+                "django_circular_gon",
+            },
+        )
+        self.assertEqual(set(alice.groups.all()), set(Group.objects.all()))
+
+    def test_mapping_nested_group_mirroring_partial_mapping(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            GROUP_SEARCH=LDAPSearch(
+                "ou=groups,o=test", ldap.SCOPE_SUBTREE, "(objectClass=groupOfNames)"
+            ),
+            GROUP_TYPE=NestedMemberDNGroupType(member_attr="member"),
+            MIRROR_GROUPS=True,
+            USE_GROUP_MAPPING=True,
+        )
+
+        active = Group.objects.create(name="django_active_gon")
+        staff = Group.objects.create(name="django_staff_gon")
+        not_mapped = Group.objects.create(name="superuser_gon")
+
+        GroupMapping.objects.create(django_group=active, ldap_group_name="active_gon")
+        GroupMapping.objects.create(django_group=staff, ldap_group_name="staff_gon")
+
+        alice = authenticate(username="alice", password="password")
+
+        self.assertEqual(
+            set(Group.objects.all().values_list("name", flat=True)),
+            {
+                "django_active_gon",
+                "django_staff_gon",
+                "superuser_gon",
+            },
+        )
+        self.assertEqual(
+            set(alice.groups.all().values_list("name", flat=True)),
+            {"django_active_gon", "django_staff_gon"}
+        )
+
+    # Group mapping forbid use of groups white/black-list. Instead mapping works as whitelist and django groups should
+    # be created beforehand
+    def test_mapping_group_no_group_whitelist(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            GROUP_SEARCH=LDAPSearch(
+                "ou=mirror_groups,o=test",
+                ldap.SCOPE_SUBTREE,
+                "(objectClass=groupOfNames)",
+            ),
+            GROUP_TYPE=GroupOfNamesType(),
+            MIRROR_GROUPS=["mirror1", "mirror2"],
+            USE_GROUP_MAPPING=True
+        )
+        backend = get_backend()
+        with self.assertRaises(ImproperlyConfigured):
+            alice = backend.populate_user("alice")
+
+    def test_mapping_group_no_group_blacklist(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            GROUP_SEARCH=LDAPSearch(
+                "ou=mirror_groups,o=test",
+                ldap.SCOPE_SUBTREE,
+                "(objectClass=groupOfNames)",
+            ),
+            GROUP_TYPE=GroupOfNamesType(),
+            MIRROR_GROUPS_EXCEPT=["mirror1", "mirror2"],
+            USE_GROUP_MAPPING=True
+        )
+        backend = get_backend()
+
+        with self.assertRaises(ImproperlyConfigured):
+            alice = backend.populate_user("alice")
+
+    def test_mapping_group_mirroring_whitelist_update(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            GROUP_SEARCH=LDAPSearch(
+                "ou=mirror_groups,o=test",
+                ldap.SCOPE_SUBTREE,
+                "(objectClass=groupOfNames)",
+            ),
+            GROUP_TYPE=GroupOfNamesType(),
+            MIRROR_GROUPS=True,
+            USE_GROUP_MAPPING=True
+        )
+
+        backend = get_backend()
+        groups = {}
+
+        # Create mapped groups
+        for i in range(1, 5):
+            django_name = "group{0}".format(i)
+            ldap_name = "mirror{0}".format(i)
+            groups[django_name] = Group.objects.create(name=django_name)
+            GroupMapping.objects.create(django_group=groups[django_name], ldap_group_name=ldap_name)
+
+        # Create unmapped group
+        groups["group5"] = Group.objects.create(name="group5")
+
+        alice = backend.populate_user("alice")
+        alice.groups.set([groups["group2"], groups["group4"], groups["group5"]])
+
+        alice = authenticate(username="alice", password="password")
+
+        self.assertEqual(
+            set(alice.groups.values_list("name", flat=True)), {"group1", "group3", "group5"}
+        )
+
+    def test_mapping_group_mirroring_whitelist_noop(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            GROUP_SEARCH=LDAPSearch(
+                "ou=mirror_groups,o=test",
+                ldap.SCOPE_SUBTREE,
+                "(objectClass=groupOfNames)",
+            ),
+            GROUP_TYPE=GroupOfNamesType(),
+            MIRROR_GROUPS=True,
+            USE_GROUP_MAPPING=True
+        )
+
+        backend = get_backend()
+        groups = {}
+
+        # Create mapped groups
+        for i in range(1, 5):
+            django_name = "group{0}".format(i)
+            ldap_name = "mirror{0}".format(i)
+            groups[django_name] = Group.objects.create(name=django_name)
+            if i in (1, 3):
+                GroupMapping.objects.create(django_group=groups[django_name], ldap_group_name=ldap_name)
+
+        # Create unmapped group
+        groups["group5"] = Group.objects.create(name="group5")
+
+        alice = backend.populate_user("alice")
+        alice.groups.set([groups["group1"], groups["group3"], groups["group4"], groups["group5"]])
+
+        alice = authenticate(username="alice", password="password")
+
+        self.assertEqual(
+            set(alice.groups.values_list("name", flat=True)), {"group1", "group3", "group4", "group5"}
+        )
 
     #
     # When selectively mirroring groups, there are eight scenarios for any
@@ -1334,6 +1735,24 @@ class LDAPTest(TestCase):
             backend.get_group_permissions(alice), {"auth.add_user", "auth.change_user"}
         )
 
+    def test_mapping_authorize_external_users(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            GROUP_SEARCH=LDAPSearch("ou=groups,o=test", ldap.SCOPE_SUBTREE),
+            GROUP_TYPE=MemberDNGroupType(member_attr="member"),
+            FIND_GROUP_PERMS=True,
+            AUTHORIZE_ALL_USERS=True,
+            USE_GROUP_MAPPING=True
+        )
+        self._init_groups_with_mapping()
+
+        backend = get_backend()
+        alice = User.objects.create(username="alice")
+
+        self.assertEqual(
+            backend.get_group_permissions(alice), {"auth.add_group", "auth.delete_user"}
+        )
+
     def test_authorize_external_unknown(self):
         self._init_settings(
             USER_SEARCH=LDAPSearch(
@@ -1345,6 +1764,24 @@ class LDAPTest(TestCase):
             AUTHORIZE_ALL_USERS=True,
         )
         self._init_groups()
+
+        backend = get_backend()
+        alice = User.objects.create(username="not-in-ldap")
+
+        self.assertEqual(backend.get_group_permissions(alice), set())
+
+    def test_mapping_authorize_external_unknown(self):
+        self._init_settings(
+            USER_SEARCH=LDAPSearch(
+                "ou=people,o=test", ldap.SCOPE_SUBTREE, "(uid=%(user)s)"
+            ),
+            GROUP_SEARCH=LDAPSearch("ou=groups,o=test", ldap.SCOPE_SUBTREE),
+            GROUP_TYPE=MemberDNGroupType(member_attr="member"),
+            FIND_GROUP_PERMS=True,
+            AUTHORIZE_ALL_USERS=True,
+            USE_GROUP_MAPPING=True,
+        )
+        self._init_groups_with_mapping()
 
         backend = get_backend()
         alice = User.objects.create(username="not-in-ldap")
@@ -1509,6 +1946,32 @@ class LDAPTest(TestCase):
         self.assertIs(backend.has_perm(alice, "auth.add_user"), True)
         self.assertIs(backend.has_module_perms(alice, "auth"), True)
 
+    def test_mapping_pickle(self):
+        self._init_settings(
+            USER_DN_TEMPLATE="uid=%(user)s,ou=people,o=test",
+            GROUP_SEARCH=LDAPSearch("ou=groups,o=test", ldap.SCOPE_SUBTREE),
+            GROUP_TYPE=MemberDNGroupType(member_attr="member"),
+            FIND_GROUP_PERMS=True,
+            USE_GROUP_MAPPING=True
+        )
+        self._init_groups_with_mapping()
+
+        backend = get_backend()
+        alice0 = authenticate(username="alice", password="password")
+
+        pickled = pickle.dumps(alice0, pickle.HIGHEST_PROTOCOL)
+        alice = pickle.loads(pickled)
+
+        self.assertIsNotNone(alice)
+        self.assertEqual(
+            backend.get_group_permissions(alice), {"auth.add_group", "auth.delete_user"}
+        )
+        self.assertEqual(
+            backend.get_all_permissions(alice), {"auth.add_group", "auth.delete_user"}
+        )
+        self.assertIs(backend.has_perm(alice, "auth.delete_user"), True)
+        self.assertIs(backend.has_module_perms(alice, "auth"), True)
+
     @mock.patch("ldap.ldapobject.SimpleLDAPObject.search_s")
     def test_search_attrlist(self, mock_search):
         backend = get_backend()
@@ -1616,3 +2079,22 @@ class LDAPTest(TestCase):
 
         active_nis = Group.objects.create(name="active_nis")
         active_nis.permissions.add(*permissions)
+
+    def _init_groups_with_mapping(self):
+        permissions = [
+            Permission.objects.get(codename="add_group"),
+            Permission.objects.get(codename="delete_user"),
+        ]
+
+        active_gon = Group.objects.create(name="django_active_gon")
+        active_gon.permissions.add(*permissions)
+
+        active_px = Group.objects.create(name="django_active_px")
+        active_px.permissions.add(*permissions)
+
+        active_nis = Group.objects.create(name="django_active_nis")
+        active_nis.permissions.add(*permissions)
+
+        GroupMapping.objects.create(django_group=active_gon, ldap_group_name="active_gon")
+        GroupMapping.objects.create(django_group=active_px, ldap_group_name="active_px")
+        GroupMapping.objects.create(django_group=active_nis, ldap_group_name="active_nis")

@@ -11,3 +11,5 @@ MANIFEST
 .tox/
 
 .idea
+*.db
+/python-ldap-test-*

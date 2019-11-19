@@ -37,6 +37,7 @@ import ldap.filter
 from django.utils.tree import Node
 
 
+# pylint: disable=missing-class-docstring
 class ConfigurationWarning(UserWarning):
     pass
 
@@ -274,6 +275,7 @@ class LDAPSearchUnion:
 
         return self.__class__(*searches)
 
+    # pylint: disable=protected-access
     def execute(self, connection, filterargs=()):
         msgids = [search._begin(connection, filterargs) for search in self.searches]
         results = {}
@@ -298,6 +300,7 @@ class _DeepStringCoder:
         self.ldap = _LDAPConfig.get_ldap()
 
     def decode(self, value):
+        """Core decode function. Calls other decode functions based on value type"""
         try:
             if isinstance(value, bytes):
                 value = value.decode(self.encoding)
@@ -346,6 +349,7 @@ class LDAPGroupType:
         self.name_attr = name_attr
         self.ldap = _LDAPConfig.get_ldap()
 
+    # pylint: disable=unused-argument, no-self-use
     def user_groups(self, ldap_user, group_search):
         """
         Returns a list of group_info structures, each one a group to which
@@ -670,7 +674,7 @@ class LDAPGroupQuery(Node):
 
     def resolve(self, ldap_user, groups=None):
         if groups is None:
-            groups = ldap_user._get_groups()
+            groups = ldap_user._get_groups()  # pylint: disable=protected-access
 
         result = self.aggregator(self._resolve_children(ldap_user, groups))
         if self.negated:

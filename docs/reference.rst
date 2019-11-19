@@ -24,7 +24,7 @@ AUTH_LDAP_AUTHORIZE_ALL_USERS
 
 Default: ``False``
 
-If ``True``, :class:`~django_auth_ldap.backend.LDAPBackend` will be able furnish
+If ``True``, :class:`~cool_django_auth_ldap.backend.LDAPBackend` will be able furnish
 permissions for any Django user, regardless of which backend authenticated it.
 
 
@@ -83,14 +83,6 @@ The value determines the amount of time, in seconds, a user's group memberships
 and distinguished name are cached. The value ``0``, the default, disables
 caching entirely.
 
-.. versionchanged:: 1.6.0
-
-    Previously caching was controlled by the settings `AUTH_LDAP_CACHE_GROUPS`
-    and `AUTH_LDAP_GROUP_CACHE_TIMEOUT`. If `AUTH_LDAP_CACHE_GROUPS` is set,
-    the `AUTH_LDAP_CACHE_TIMEOUT` value is derievd from these deprecated
-    settings.
-
-
 .. setting:: AUTH_LDAP_CONNECTION_OPTIONS
 
 AUTH_LDAP_CONNECTION_OPTIONS
@@ -121,10 +113,13 @@ AUTH_LDAP_FIND_GROUP_PERMS
 
 Default: ``False``
 
-If ``True``, :class:`~django_auth_ldap.backend.LDAPBackend` will furnish group
+If ``True``, :class:`~cool_django_auth_ldap.backend.LDAPBackend` will furnish group
 permissions based on the LDAP groups the authenticated user belongs to.
 :setting:`AUTH_LDAP_GROUP_SEARCH` and :setting:`AUTH_LDAP_GROUP_TYPE` must also be
 set.
+
+If :setting:`AUTH_LDAP_USE_GROUP_MAPPING` set to True. You can use table cool_django_auth_ldap_groupmapping
+to specify mapping between django and LDAP groups. Otherwise name of django group equals to name of LDAP group.
 
 
 .. setting:: AUTH_LDAP_GLOBAL_OPTIONS
@@ -151,7 +146,7 @@ AUTH_LDAP_GROUP_SEARCH
 
 Default: ``None``
 
-An :class:`~django_auth_ldap.config.LDAPSearch` object that finds all LDAP
+An :class:`~cool_django_auth_ldap.config.LDAPSearch` object that finds all LDAP
 groups that users might belong to. If your configuration makes any references to
 LDAP groups, this and :setting:`AUTH_LDAP_GROUP_TYPE` must be set.
 
@@ -163,7 +158,7 @@ AUTH_LDAP_GROUP_TYPE
 
 Default: ``None``
 
-An :class:`~django_auth_ldap.config.LDAPGroupType` instance describing the type
+An :class:`~cool_django_auth_ldap.config.LDAPGroupType` instance describing the type
 of group returned by :setting:`AUTH_LDAP_GROUP_SEARCH`.
 
 
@@ -174,7 +169,7 @@ AUTH_LDAP_MIRROR_GROUPS
 
 Default: ``None``
 
-If ``True``, :class:`~django_auth_ldap.backend.LDAPBackend` will mirror a user's
+If ``True``, :class:`~cool_django_auth_ldap.backend.LDAPBackend` will mirror a user's
 LDAP group membership in the Django database. Any time a user authenticates, we
 will create all of their LDAP groups as Django groups and update their Django
 group membership to exactly match their LDAP group membership. If the LDAP
@@ -184,6 +179,8 @@ representation.
 This can also be a list or other collection of group names, in which case we'll
 only mirror those groups and leave the rest alone. This is ignored if
 :setting:`AUTH_LDAP_MIRROR_GROUPS_EXCEPT` is set.
+
+If :setting:`AUTH_LDAP_USE_GROUP_MAPPING` is set, :setting:`AUTH_LDAP_MIRROR_GROUPS` can only be set to boolean value.
 
 
 .. setting:: AUTH_LDAP_MIRROR_GROUPS_EXCEPT
@@ -197,6 +194,8 @@ If this is not ``None``, it must be a list or other collection of group names.
 This will enable group mirroring, except that we'll never change the membership
 of the indicated groups. :setting:`AUTH_LDAP_MIRROR_GROUPS` is ignored in this
 case.
+
+This setting can't be used when :setting:`AUTH_LDAP_USE_GROUP_MAPPING` set to True.
 
 
 .. setting:: AUTH_LDAP_PERMIT_EMPTY_PASSWORD
@@ -222,7 +221,7 @@ Default: ``None``
 
 The distinguished name of a group; authentication will fail for any user that
 does not belong to this group. This can also be an
-:class:`~django_auth_ldap.config.LDAPGroupQuery` instance.
+:class:`~cool_django_auth_ldap.config.LDAPGroupQuery` instance.
 
 
 .. setting:: AUTH_LDAP_NO_NEW_USERS
@@ -267,6 +266,16 @@ LDAP port. There are a number of configuration options that can be given to
 :setting:`AUTH_LDAP_GLOBAL_OPTIONS` that affect the TLS connection. For example,
 :data:`ldap.OPT_X_TLS_REQUIRE_CERT` can be set to :data:`ldap.OPT_X_TLS_NEVER`
 to disable certificate verification, perhaps to allow self-signed certificates.
+
+
+.. setting:: AUTH_LDAP_USE_GROUP_MAPPING
+
+AUTH_LDAP_USE_GROUP_MAPPING
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Default: ``False``
+
+Controls ability to set up mapping between django and ldap groups in table `cool_django_auth_ldap_groupmapping`
 
 
 .. setting:: AUTH_LDAP_USER_QUERY_FIELD
@@ -334,7 +343,7 @@ distinguished names of LDAP groups. The corresponding field is set to ``True``
 or ``False`` according to whether the user is a member of the group.
 
 Values may be strings for simple group membership tests or
-:class:`~django_auth_ldap.config.LDAPGroupQuery` instances for more complex
+:class:`~cool_django_auth_ldap.config.LDAPGroupQuery` instances for more complex
 cases.
 
 
@@ -345,7 +354,7 @@ AUTH_LDAP_USER_SEARCH
 
 Default: ``None``
 
-An :class:`~django_auth_ldap.config.LDAPSearch` object that will locate a user
+An :class:`~cool_django_auth_ldap.config.LDAPSearch` object that will locate a user
 in the directory. The filter parameter should contain the placeholder
 ``%(user)s`` for the username. It must return exactly one result for
 authentication to succeed.
@@ -353,22 +362,12 @@ authentication to succeed.
 
 Module Properties
 -----------------
-
-.. module:: django_auth_ldap
-
-.. data:: version
-
-    The library's current version number as a 3-tuple.
-
-.. data:: version_string
-
-    The library's current version number as a string.
-
+No module properties
 
 Configuration
 -------------
 
-.. module:: django_auth_ldap.config
+.. module:: cool_django_auth_ldap.config
 
 .. class:: LDAPSearch
 
@@ -382,8 +381,6 @@ Configuration
 
 
 .. class:: LDAPSearchUnion
-
-    .. versionadded:: 1.1
 
     .. method:: __init__(\*searches)
 
@@ -409,7 +406,7 @@ Configuration
 
 .. class:: PosixGroupType
 
-    A concrete subclass of :class:`~django_auth_ldap.config.LDAPGroupType` that
+    A concrete subclass of :class:`~cool_django_auth_ldap.config.LDAPGroupType` that
     handles the ``posixGroup`` object class. This checks for both primary group
     and group membership.
 
@@ -419,7 +416,7 @@ Configuration
 .. class:: MemberDNGroupType
 
     A concrete subclass of
-    :class:`~django_auth_ldap.config.LDAPGroupType` that handles grouping
+    :class:`~cool_django_auth_ldap.config.LDAPGroupType` that handles grouping
     mechanisms wherein the group object contains a list of its member DNs.
 
     .. method:: __init__(member_attr, name_attr='cn')
@@ -431,7 +428,7 @@ Configuration
 
 .. class:: NestedMemberDNGroupType
 
-    Similar to :class:`~django_auth_ldap.config.MemberDNGroupType`, except this
+    Similar to :class:`~cool_django_auth_ldap.config.MemberDNGroupType`, except this
     allows groups to contain other groups as members. Group hierarchies will be
     traversed to determine membership.
 
@@ -442,7 +439,7 @@ Configuration
 
 .. class:: GroupOfNamesType
 
-    A concrete subclass of :class:`~django_auth_ldap.config.MemberDNGroupType`
+    A concrete subclass of :class:`~cool_django_auth_ldap.config.MemberDNGroupType`
     that handles the ``groupOfNames`` object class. Equivalent to
     ``MemberDNGroupType('member')``.
 
@@ -452,7 +449,7 @@ Configuration
 .. class:: NestedGroupOfNamesType
 
     A concrete subclass of
-    :class:`~django_auth_ldap.config.NestedMemberDNGroupType` that handles the
+    :class:`~cool_django_auth_ldap.config.NestedMemberDNGroupType` that handles the
     ``groupOfNames`` object class. Equivalent to
     ``NestedMemberDNGroupType('member')``.
 
@@ -461,7 +458,7 @@ Configuration
 
 .. class:: GroupOfUniqueNamesType
 
-    A concrete subclass of :class:`~django_auth_ldap.config.MemberDNGroupType`
+    A concrete subclass of :class:`~cool_django_auth_ldap.config.MemberDNGroupType`
     that handles the ``groupOfUniqueNames`` object class. Equivalent to
     ``MemberDNGroupType('uniqueMember')``.
 
@@ -471,7 +468,7 @@ Configuration
 .. class:: NestedGroupOfUniqueNamesType
 
     A concrete subclass of
-    :class:`~django_auth_ldap.config.NestedMemberDNGroupType` that handles the
+    :class:`~cool_django_auth_ldap.config.NestedMemberDNGroupType` that handles the
     ``groupOfUniqueNames`` object class. Equivalent to
     ``NestedMemberDNGroupType('uniqueMember')``.
 
@@ -480,7 +477,7 @@ Configuration
 
 .. class:: ActiveDirectoryGroupType
 
-    A concrete subclass of :class:`~django_auth_ldap.config.MemberDNGroupType`
+    A concrete subclass of :class:`~cool_django_auth_ldap.config.MemberDNGroupType`
     that handles Active Directory groups. Equivalent to
     ``MemberDNGroupType('member')``.
 
@@ -490,7 +487,7 @@ Configuration
 .. class:: NestedActiveDirectoryGroupType
 
     A concrete subclass of
-    :class:`~django_auth_ldap.config.NestedMemberDNGroupType` that handles
+    :class:`~cool_django_auth_ldap.config.NestedMemberDNGroupType` that handles
     Active Directory groups. Equivalent to
     ``NestedMemberDNGroupType('member')``.
 
@@ -499,7 +496,7 @@ Configuration
 
 .. class:: OrganizationalRoleGroupType
 
-    A concrete subclass of :class:`~django_auth_ldap.config.MemberDNGroupType`
+    A concrete subclass of :class:`~cool_django_auth_ldap.config.MemberDNGroupType`
     that handles the ``organizationalRole`` object class. Equivalent to
     ``MemberDNGroupType('roleOccupant')``.
 
@@ -509,7 +506,7 @@ Configuration
 .. class:: NestedOrganizationalRoleGroupType
 
     A concrete subclass of
-    :class:`~django_auth_ldap.config.NestedMemberDNGroupType` that handles the
+    :class:`~cool_django_auth_ldap.config.NestedMemberDNGroupType` that handles the
     ``organizationalRole`` object class. Equivalent to
     ``NestedMemberDNGroupType('roleOccupant')``.
 
@@ -539,7 +536,7 @@ Configuration
 Backend
 -------
 
-.. module:: django_auth_ldap.backend
+.. module:: cool_django_auth_ldap.backend
 
 .. data:: populate_user
 
@@ -551,7 +548,7 @@ Backend
     ``ldap_user.attrs``. This signal has two keyword arguments: ``user`` is the
     :class:`~django.contrib.auth.models.User` object and ``ldap_user`` is the
     same as ``user.ldap_user``. The sender is the
-    :class:`~django_auth_ldap.backend.LDAPBackend` class.
+    :class:`~cool_django_auth_ldap.backend.LDAPBackend` class.
 
 .. data:: ldap_error
 
@@ -565,12 +562,12 @@ Backend
     - ``user``: the Django user being processed (if available).
     - ``exception``: the :exc:`~ldap.LDAPError` object itself.
 
-    The sender is the :class:`~django_auth_ldap.backend.LDAPBackend` class (or
+    The sender is the :class:`~cool_django_auth_ldap.backend.LDAPBackend` class (or
     subclass).
 
 .. class:: LDAPBackend
 
-    :class:`~django_auth_ldap.backend.LDAPBackend` has one method that may be
+    :class:`~cool_django_auth_ldap.backend.LDAPBackend` has one method that may be
     called directly and several that may be overridden in subclasses.
 
     .. data:: settings_prefix
@@ -583,7 +580,7 @@ Backend
     .. data:: default_settings
 
         A dictionary of default settings. This is empty in
-        :class:`~django_auth_ldap.backend.LDAPBackend`, but subclasses can
+        :class:`~cool_django_auth_ldap.backend.LDAPBackend`, but subclasses can
         populate this with values that will override the built-in defaults. Note
         that the keys should omit the ``'AUTH_LDAP_'`` prefix.
 
@@ -597,7 +594,7 @@ Backend
     .. method:: get_user_model(self)
 
         Returns the user model that
-        :meth:`~django_auth_ldap.backend.LDAPBackend.get_or_build_user` will
+        :meth:`~cool_django_auth_ldap.backend.LDAPBackend.get_or_build_user` will
         instantiate. By default, custom user models will be respected.
         Subclasses would most likely override this in order to substitute a
         :ref:`proxy model <proxy-models>`.
@@ -612,16 +609,16 @@ Backend
         Given a username and an LDAP user object, this must return a valid
         Django user model instance. The ``username`` argument has already been
         passed through
-        :meth:`~django_auth_ldap.backend.LDAPBackend.ldap_to_django_username`.
+        :meth:`~cool_django_auth_ldap.backend.LDAPBackend.ldap_to_django_username`.
         You can get information about the LDAP user via ``ldap_user.dn`` and
         ``ldap_user.attrs``. The return value must be an (instance, created)
         two-tuple. The instance does not need to be saved.
 
         The default implementation looks for the username with a
         case-insensitive query; if it's not found, the model returned by
-        :meth:`~django_auth_ldap.backend.LDAPBackend.get_user_model` will be
+        :meth:`~cool_django_auth_ldap.backend.LDAPBackend.get_user_model` will be
         created with the lowercased username. New users will not be saved to the
-        database until after the :data:`django_auth_ldap.backend.populate_user`
+        database until after the :data:`cool_django_auth_ldap.backend.populate_user`
         signal has been sent.
 
         A subclass may override this to associate LDAP users to Django users any
@@ -636,7 +633,20 @@ Backend
     .. method:: django_to_ldap_username(username)
 
         The inverse of
-        :meth:`~django_auth_ldap.backend.LDAPBackend.ldap_to_django_username`.
+        :meth:`~cool_django_auth_ldap.backend.LDAPBackend.ldap_to_django_username`.
         If this is not symmetrical to
-        :meth:`~django_auth_ldap.backend.LDAPBackend.ldap_to_django_username`,
+        :meth:`~cool_django_auth_ldap.backend.LDAPBackend.ldap_to_django_username`,
         the behavior is undefined.
+
+Models
+------
+
+.. module:: cool_django_auth_ldap.models
+
+.. class:: GroupMapping
+
+    Represents a model for storing mapping between django and LDAP groups.
+
+    Model has two fields:
+        - Foreign key to auth_group table
+        - CharField to store LDAP group name
