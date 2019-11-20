@@ -1,6 +1,6 @@
-include README.md LICENSE CHANGES
-include tox.ini
-
-recursive-include docs *
-recursive-include tests *
-prune docs/build
+include AUTHORS.rst
+include CONTRIBUTING.rst
+include HISTORY.rst
+include LICENSE
+include README.rst
+recursive-include cool_django_auth_ldap *.html *.png *.gif *js *.css *jpg *jpeg *svg *py

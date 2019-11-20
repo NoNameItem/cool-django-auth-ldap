@@ -1,6 +1,6 @@
 [run]
-source = cool_django_auth_ldap
 branch = True
+source = cool_django_auth_ldap
 
 [report]
 show_missing = True

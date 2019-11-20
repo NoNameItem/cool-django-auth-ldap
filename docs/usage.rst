@@ -1,14 +1,6 @@
-Installation
-============
-
-Install the package with pip:
-
-.. code-block:: sh
-
-    $ pip install cool-django-auth-ldap
-
-It requires `python-ldap`_ >= 3.0. You'll need the `OpenLDAP`_ libraries and
-headers available on your system.
+=====
+Usage
+=====
 
 To use the auth backend in a Django project, add
 ``'cool_django_auth_ldap.backend.LDAPBackend'`` to
@@ -43,7 +35,3 @@ models, but it does assume that a database is present.
             "cool_django_auth_ldap.backend.LDAPBackend",
             "django.contrib.auth.backends.ModelBackend",
         ]
-
-
-.. _`python-ldap`: https://pypi.org/project/python-ldap/
-.. _`OpenLDAP`: https://www.openldap.org/
