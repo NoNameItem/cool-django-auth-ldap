@@ -1,4 +1,4 @@
 wheel==0.30.0
 gitchangelog
 pylint
-
+flake8>=2.1.0

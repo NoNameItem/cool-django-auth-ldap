@@ -29,10 +29,17 @@ install:
 
 script:
   - coverage run manage.py test --settings tests.settings
+  - codecov
 
 jobs:
   include:
-    - stage: coverage
+    - stage: flake8
+      python: 3.7
+      env:
+        - DJANGO=Django==2.2
+        - ALLOW_FAILURE=True
+      script: flake8
+    - stage: CodeClimate Coverage
       python: 3.7
       env: DJANGO=Django==2.2
       before_script:
@@ -88,7 +95,8 @@ jobs:
     - python: "3.7"
       env: DJANGO="--pre Django""
     - python: "3.8"
-      env: DJANGO="--pre Django""   
+      env: DJANGO="--pre Django""
+    - env: ALLOW_FAILURE=True
 
 notifications:
   email:
