@@ -10,11 +10,10 @@ addons:
 
 python:
   - "3.5"
-  - "3.6"      # current default Python on Travis CI
+  - "3.6"
   - "3.7"
   - "3.8"
-  - "3.8-dev"  # 3.8 development branch
-  - "nightly"  # nightly build
+  - "nightly"
 
 env:
   - DJANGO="Django==1.11"
@@ -26,12 +25,10 @@ env:
 install:
   - pip install -q $DJANGO
   - python -m django --version
-  - pip install -r dev-requirements.txt
-  - pip install coveralls
+  - pip install -r requirements-ci.txt
 
 script:
   - coverage run manage.py test --settings tests.settings
-  - coveralls
 
 jobs:
   include:
@@ -58,7 +55,7 @@ jobs:
         - provider: pypi
           edge: true
           distributions: sdist bdist_wheel
-          user: nonameitem
+          user: NoNameItem
           password: ${PYPI_PASSWORD}
           cleanup: false
           remove_build_dir: false
@@ -76,16 +73,6 @@ jobs:
           on:
             tags: true
   allow_failures:
-    - python: "3.8-dev"
-      env: DJANGO="Django==1.11"
-    - python: "3.8-dev"
-      env: DJANGO="Django==2.0"
-    - python: "3.8-dev"
-      env: DJANGO="Django==2.1"
-    - python: "3.8-dev"
-      env: DJANGO="Django==2.2"
-    - python: "3.8-dev"
-      env: DJANGO="--pre Django"
     - python: "nightly"
       env: DJANGO="Django==1.11"
     - python: "nightly"
@@ -94,17 +81,14 @@ jobs:
       env: DJANGO="Django==2.1"
     - python: "nightly"
       env: DJANGO="Django==2.2"
-    - python: "nightly"
-      env: DJANGO="--pre Django"
     - python: "3.5"
-      env: DJANGO="--pre Django"
+      env: DJANGO="--pre Django""
     - python: "3.6"
-      env: DJANGO="--pre Django"
+      env: DJANGO="--pre Django""
     - python: "3.7"
-      env: DJANGO="--pre Django"
+      env: DJANGO="--pre Django""
     - python: "3.8"
-      env: DJANGO="--pre Django"
-
+      env: DJANGO="--pre Django""   
 
 notifications:
   email:
@@ -112,4 +96,3 @@ notifications:
       - nonameitem@me.com
     on_success: always
     on_failure: always
-  webhooks: https://coveralls.io/webhook

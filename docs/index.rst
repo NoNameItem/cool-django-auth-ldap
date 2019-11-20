@@ -15,7 +15,8 @@ This version is supported on Python 3.5+; and Django 1.11+. It requires
 .. toctree::
     :maxdepth: 2
 
-    install
+    installation
+    usage
     authentication
     groups
     users
@@ -28,6 +29,7 @@ This version is supported on Python 3.5+; and Django 1.11+. It requires
     reference
     changes
     contributing
+    authors
 
 .. _`python-ldap`: https://pypi.org/project/python-ldap/
 
