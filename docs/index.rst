@@ -2,8 +2,6 @@
 Cool Django Authentication Using LDAP
 =====================================
 
-.. include:: badges-doc.rst
-
 This is a Django authentication backend that authenticates against an LDAP
 service. Configuration can be as simple as a single distinguished name
 template, but there are many rich configuration options for working with users,
