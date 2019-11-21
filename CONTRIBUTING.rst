@@ -73,13 +73,14 @@ Ready to contribute? Here's how to set up `cool-django-auth-ldap` for local deve
 
    Now you can make your changes locally.
 
-5. When you're done making changes, check that your changes pass flake8 and the
+5. When you're done making changes, check that your changes pass flake8, bandit and the
    tests, including testing other Python versions with tox::
 
         $ flake8 cool_django_auth_ldap tests
+        $ bandit -r .
         $ python manage.py test --settings tests.settings
 
-   To get flake8, just pip install it into your virtualenv. 
+   To get flake8 and bandit, just pip install it into your virtualenv (Should be installed uf you use requirements_dev.txt).
 
 6. Commit your changes and push your branch to GitHub::
 

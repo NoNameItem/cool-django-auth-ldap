@@ -33,12 +33,14 @@ script:
 
 jobs:
   include:
-    - stage: flake8
+    - stage: Linters
       python: 3.7
       env:
         - DJANGO=Django==2.2
-        - ALLOW_FAILURE=True
+      name: Flake8
       script: flake8
+    - script: bandit -r .
+      name: Bandit
     - stage: "Code Climate"
       python: 3.7
       env: DJANGO=Django==2.2
@@ -96,7 +98,6 @@ jobs:
       env: DJANGO="--pre Django""
     - python: "3.8"
       env: DJANGO="--pre Django""
-    - env: ALLOW_FAILURE=True
 
 notifications:
   email:

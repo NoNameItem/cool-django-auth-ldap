@@ -81,10 +81,6 @@ populate_user = django.dispatch.Signal(providing_args=["user", "ldap_user"])  # 
 ldap_error = django.dispatch.Signal(providing_args=["context", "user", "exception"])  # pylint: disable=invalid-name
 
 
-
-
-
-
 class LDAPBackend:
     """
     The main backend class. This implements the auth backend API, although it
