@@ -1,5 +1,7 @@
-wheel==0.30.0
+Django==2.2
 gitchangelog
 pylint
 flake8>=2.1.0
 bandit
+coverage
+mock>=1.0.1

@@ -1,2 +1,2 @@
 [bandit]
-exclude: /tests
+exclude: /tests,/setup.py,/runtests.py,/manage.py,/docs
