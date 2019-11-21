@@ -83,21 +83,21 @@ jobs:
             tags: true
   allow_failures:
     - python: "nightly"
-      env: DJANGO="Django==1.11"
-    - python: "nightly"
       env: DJANGO="Django==2.0"
     - python: "nightly"
       env: DJANGO="Django==2.1"
     - python: "nightly"
       env: DJANGO="Django==2.2"
+    - python: "nightly"
+      env: DJANGO="--pre Django"
     - python: "3.5"
-      env: DJANGO="--pre Django""
+      env: DJANGO="--pre Django"
     - python: "3.6"
-      env: DJANGO="--pre Django""
+      env: DJANGO="--pre Django"
     - python: "3.7"
-      env: DJANGO="--pre Django""
+      env: DJANGO="--pre Django"
     - python: "3.8"
-      env: DJANGO="--pre Django""
+      env: DJANGO="--pre Django"
 
 notifications:
   email:
