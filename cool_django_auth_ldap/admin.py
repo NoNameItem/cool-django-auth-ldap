@@ -19,5 +19,7 @@ class GroupMappingAdmin(admin.ModelAdmin):
     def has_module_permission(self, request):
         return request.user.is_staff
 
+    list_display = ('django_group', 'ldap_group_name')
+
 
 admin.site.register(GroupMapping, GroupMappingAdmin)
