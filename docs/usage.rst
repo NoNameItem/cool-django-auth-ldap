@@ -13,7 +13,7 @@ To use the auth backend in a Django project, add
 
     INSTALLED_APPS = (
         ...
-        "cool_django_auth_ldap"
+        "cool_django_auth_ldap.apps.AppConfig"
         ...
     )
 
