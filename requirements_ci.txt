@@ -10,3 +10,4 @@ twine
 pbr
 gitchangelog
 bandit
+pystache
