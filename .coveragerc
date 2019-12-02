@@ -3,4 +3,4 @@ branch = True
 source = cool_django_auth_ldap
 
 [report]
-show_missing = True
+

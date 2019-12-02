@@ -30,6 +30,7 @@ install:
 
 script:
   - coverage run manage.py test --settings tests.settings
+  - coverage report
   - coveralls
 
 jobs:
