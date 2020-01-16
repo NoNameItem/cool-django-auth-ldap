@@ -1,4 +1,4 @@
-Django >= 1.11
+coverage==4.5.4
 coveralls
 mock >= 2.0.0
 python-ldap >= 3.0
