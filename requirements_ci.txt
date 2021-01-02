@@ -9,5 +9,5 @@ wheel
 twine
 pbr
 gitchangelog
-bandit
+bandit==1.5.1
 pystache
